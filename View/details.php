@@ -373,6 +373,22 @@
                                 });
                             },
                         );
+                        <?php if($this->Helper->Core->isInstalled('inventory')): ?>
+                            tabs.add(
+                                'inventory',
+                                {
+                                    icon: "box-seam",
+                                    label: builder.Locale.get("Inventory"),
+                                },
+                                function(tab,nav){
+                                    card.inventory = tab;
+                                    InventoryFeed(builder.Storage.getKey(), tab, function(table, component){
+                                        card.inventory.table = table;
+                                        card.inventory.component = component;
+                                    });
+                                },
+                            );
+                        <?php endif; ?>
                         tabs.add(
                             'files',
                             {
