@@ -388,18 +388,18 @@
                                 });
                             },
                         );
-                        <?php if($this->Helper->Core->isInstalled('inventory')): ?>
+                        <?php if($this->Helper->Core->isInstalled('services')): ?>
                             tabs.add(
-                                'inventory',
+                                'services',
                                 {
-                                    icon: "box-seam",
-                                    label: builder.Locale.get("Inventory"),
+                                    icon: "cash-coin",
+                                    label: builder.Locale.get("Services"),
                                 },
                                 function(tab,nav){
-                                    card.inventory = tab;
-                                    InventoryFeed(builder.Storage.getKey(), tab, function(table, component){
-                                        card.inventory.table = table;
-                                        card.inventory.component = component;
+                                    card.services = tab;
+                                    ServicesFeed(builder.Storage.getKey(), tab, function(feed, component){
+                                        card.services.feed = feed;
+                                        card.services.component = component;
                                     });
                                 },
                             );
@@ -514,16 +514,15 @@
                                     case 'dependencies':
                                         if(subkey.length > 1){
                                             switch(subkey[1]){
-                                                case 'inventory':
-                                                    console.log("Length: "+subkey.length)
+                                                case 'services':
                                                     if(subkey.length > 2){
-                                                        const row = Tabs._component.inventory.table._datatable.row(function (idx, data, node) {
+                                                        const row = Tabs._component.services.feed._datatable.row(function (idx, data, node) {
                                                             return data.id == value.id;
                                                         });
                                                         if (row.any()) {
                                                             row.data(value).draw(false);
                                                         } else {
-                                                            Tabs._component.inventory.table.add(value);
+                                                            Tabs._component.services.feed.add(value);
                                                         }
                                                     }
                                                     break;

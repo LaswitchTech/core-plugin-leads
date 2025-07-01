@@ -100,10 +100,10 @@ class LeadsEndpoint extends Endpoint {
                 "relationships" => $relationships,
             ];
 
-            // Check if the Inventory is accessible
-            if(!is_null($this->Model->Inventory)){
+            // Check if the Services is accessible
+            if(!is_null($this->Model->Services)){
                 if(!is_null($lead['client']['id']))
-                $message['data']['dependencies']['inventory'] = $this->Model->Inventory->fetchAll([
+                $message['data']['dependencies']['services'] = $this->Model->Services->fetchAll([
                     ["key" => "targetTable", "operator" => "=", "value" => "clients"],
                     ["key" => "targetId", "operator" => "=", "value" => $lead['client']['id']],
                 ]);
