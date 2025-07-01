@@ -479,7 +479,9 @@
                             function(tab,nav){
                                 tab.addClass('px-4 py-3');
                                 card.related = tab;
-                                RelationshipFeed(builder.Storage.get('relationships') ?? [], tab, "leads", builder.Storage.get('record:id'));
+                                RelatedFeed(builder.Storage.getKey(), tab, function(feed){
+                                    card.related.feed = feed;
+                                });
                             },
                         );
                     },
