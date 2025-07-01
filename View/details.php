@@ -22,10 +22,10 @@
             success: function(response) {
 
                 // Configure Storage
-                builder.Storage.setKey('leads:' + builder.Storage.get('record:id'));
+                builder.Storage.setKey('leads:<?= $this->Request->getParams('GET', 'id') ?>');
                 builder.Storage.set(response);
 
-                // Temporary fix for the contacts
+                // Temporary fix for the Listings
                 builder.Storage.set(response.record.contacts ?? [],'dependencies:contacts');
                 builder.Storage.set(response.record.documents ?? [],'dependencies:documents');
                 builder.Storage.set(response.record.events ?? [],'dependencies:events');
