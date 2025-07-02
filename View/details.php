@@ -22,16 +22,8 @@
             success: function(response) {
 
                 // Configure Storage
-                builder.Storage.setKey('leads:<?= $this->Request->getParams('GET', 'id') ?>');
+                builder.Storage.setKey('leads:'+response.record.id);
                 builder.Storage.set(response);
-
-                // Temporary fix for the Listings
-                builder.Storage.set(response.record.contacts ?? [],'dependencies:contacts');
-                builder.Storage.set(response.record.documents ?? [],'dependencies:documents');
-                builder.Storage.set(response.record.events ?? [],'dependencies:events');
-                builder.Storage.set(response.record.files ?? [],'dependencies:files');
-                builder.Storage.set(response.record.followups ?? [],'dependencies:followups');
-                builder.Storage.set(response.record.notes ?? [],'dependencies:notes');
                 console.log(builder.Storage.get())
 
                 var contacts = [];
