@@ -96,17 +96,80 @@ class LeadsEndpoint extends Endpoint {
             }
             $message['data'] = [
                 "record" => $lead,
-                "dependencies" => [],
+                "dependencies" => [
+                    "contacts" => $lead['contacts'] ?? [], // Temporary fix for the Listings
+                    "documents" => $lead['documents'] ?? [], // Temporary fix for the Listings
+                    "events" => $lead['events'] ?? [], // Temporary fix for the Listings
+                    "files" => $lead['files'] ?? [], // Temporary fix for the Listings
+                    "followups" => $lead['followups'] ?? [], // Temporary fix for the Listings
+                    "notes" => $lead['notes'] ?? [], // Temporary fix for the Listings
+                ],
                 "relationships" => $relationships,
             ];
 
+            // // Check if the Contacts is accessible
+            // if($this->Helper->Core->isInstalled('contacts')){
+            //     $message['data']['dependencies']['contacts'] = $this->Model->Contacts->fetchAll([
+            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
+            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
+            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
+            //     ]);
+            // }
+
+            // // Check if the Documents is accessible
+            // if($this->Helper->Core->isInstalled('documents')){
+            //     $message['data']['dependencies']['documents'] = $this->Model->Documents->fetchAll([
+            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
+            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
+            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
+            //     ]);
+            // }
+
+            // // Check if the Events is accessible
+            // if($this->Helper->Core->isInstalled('events')){
+            //     $message['data']['dependencies']['events'] = $this->Model->Events->fetchAll([
+            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
+            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
+            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
+            //     ]);
+            // }
+
+            // // Check if the Files is accessible
+            // if($this->Helper->Core->isInstalled('files')){
+            //     $message['data']['dependencies']['files'] = $this->Model->Files->fetchAll([
+            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
+            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
+            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
+            //     ]);
+            // }
+
+            // // Check if the Followups is accessible
+            // if($this->Helper->Core->isInstalled('followups')){
+            //     $message['data']['dependencies']['followups'] = $this->Model->Followups->fetchAll([
+            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
+            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
+            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
+            //     ]);
+            // }
+
+            // // Check if the Notes is accessible
+            // if($this->Helper->Core->isInstalled('notes')){
+            //     $message['data']['dependencies']['notes'] = $this->Model->Notes->fetchAll([
+            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
+            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
+            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
+            //     ]);
+            // }
+
             // Check if the Services is accessible
-            if(!is_null($this->Model->Services)){
-                if(!is_null($lead['client']['id']))
-                $message['data']['dependencies']['services'] = $this->Model->Services->fetchAll([
-                    ["key" => "targetTable", "operator" => "=", "value" => "clients"],
-                    ["key" => "targetId", "operator" => "=", "value" => $lead['client']['id']],
-                ]);
+            if($this->Helper->Core->isInstalled('services')){
+                if(!is_null($lead['client']['id'])){
+                    $message['data']['dependencies']['services'] = $this->Model->Services->fetchAll([
+                        ["key" => "targetTable", "operator" => "=", "value" => "clients"],
+                        ["key" => "targetId", "operator" => "=", "value" => $lead['client']['id']],
+                        ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                    ]);
+                }
             }
         }
         return $message;

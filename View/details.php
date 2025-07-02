@@ -22,16 +22,8 @@
             success: function(response) {
 
                 // Configure Storage
-                builder.Storage.setKey('leads:<?= $this->Request->getParams('GET', 'id') ?>');
+                builder.Storage.setKey('leads:'+response.record.id);
                 builder.Storage.set(response);
-
-                // Temporary fix for the Listings
-                builder.Storage.set(response.record.contacts ?? [],'dependencies:contacts');
-                builder.Storage.set(response.record.documents ?? [],'dependencies:documents');
-                builder.Storage.set(response.record.events ?? [],'dependencies:events');
-                builder.Storage.set(response.record.files ?? [],'dependencies:files');
-                builder.Storage.set(response.record.followups ?? [],'dependencies:followups');
-                builder.Storage.set(response.record.notes ?? [],'dependencies:notes');
                 console.log(builder.Storage.get())
 
                 var contacts = [];
@@ -310,84 +302,90 @@
                     },
                     function(tabs,card){
                         card._component.body.removeClass('card-body');
-                        tabs.add(
-                            'notes',
-                            {
-                                icon: "stickies",
-                                label: builder.Locale.get("Notes"),
-                            },
-                            function(tab,nav){
-                                card.notes = tab;
-                                NotesFeed(builder.Storage.get('dependencies:notes') ?? [], tab, 'leads', builder.Storage.get('record:id'));
-                            },
-                        );
-                        tabs.add(
-                            'contacts',
-                            {
-                                icon: "person-vcard",
-                                label: builder.Locale.get("Contacts"),
-                            },
-                            function(tab,nav){
-                                card.contacts = tab;
-                                ContactsFeed(builder.Storage.get('dependencies:contacts') ?? [], tab, {
-                                    "category": "Contact",
-                                    "address": builder.Storage.get('record:vcard:address'),
-                                    "city": builder.Storage.get('record:vcard:city'),
-                                    "country": builder.Storage.get('record:vcard:country'),
-                                    "state": builder.Storage.get('record:vcard:state'),
-                                    "zipcode": builder.Storage.get('record:vcard:zipcode'),
-                                    "locale": builder.Storage.get('record:vcard:locale'),
-                                    "phone": builder.Storage.get('record:vcard:phone'),
-                                    "targetTable": "leads",
-                                    "targetId": builder.Storage.get('record:id'),
-                                });
-                            },
-                        );
-                        tabs.add(
-                            'calls',
-                            {
-                                icon: "telephone",
-                                label: builder.Locale.get("Calls"),
-                            },
-                            function(tab,nav){
-                                card.calls = tab;
-                                FollowupsTable("Call", builder.Storage.get('dependencies:followups'), tab, {
-                                    category: 'Call',
-                                    targetTable: "leads",
-                                    targetId: builder.Storage.get('record:id'),
-                                });
-                            },
-                        );
-                        tabs.add(
-                            'callbacks',
-                            {
-                                icon: "telephone-forward",
-                                label: builder.Locale.get("Callbacks"),
-                            },
-                            function(tab,nav){
-                                card.callbacks = tab;
-                                FollowupsTable("Callback", builder.Storage.get('dependencies:followups'), tab, {
-                                    category: 'Callback',
-                                    targetTable: "leads",
-                                    targetId: builder.Storage.get('record:id'),
-                                });
-                            },
-                        );
-                        tabs.add(
-                            'appointments',
-                            {
-                                icon: "calendar2-event",
-                                label: builder.Locale.get("Appointments"),
-                            },
-                            function(tab,nav){
-                                card.appointments = tab;
-                                FollowupsTable("Appointment", builder.Storage.get('dependencies:followups'), tab, {
-                                    category: 'Appointment',
-                                    targetTable: "leads",
-                                    targetId: builder.Storage.get('record:id'),
-                                });
-                            },
-                        );
+                        <?php if($this->Helper->Core->isInstalled('notes')): ?>
+                            tabs.add(
+                                'notes',
+                                {
+                                    icon: "stickies",
+                                    label: builder.Locale.get("Notes"),
+                                },
+                                function(tab,nav){
+                                    card.notes = tab;
+                                    NotesFeed(builder.Storage.get('dependencies:notes') ?? [], tab, 'leads', builder.Storage.get('record:id'));
+                                },
+                            );
+                        <?php endif; ?>
+                        <?php if($this->Helper->Core->isInstalled('contacts')): ?>
+                            tabs.add(
+                                'contacts',
+                                {
+                                    icon: "person-vcard",
+                                    label: builder.Locale.get("Contacts"),
+                                },
+                                function(tab,nav){
+                                    card.contacts = tab;
+                                    ContactsFeed(builder.Storage.get('dependencies:contacts') ?? [], tab, {
+                                        "category": "Contact",
+                                        "address": builder.Storage.get('record:vcard:address'),
+                                        "city": builder.Storage.get('record:vcard:city'),
+                                        "country": builder.Storage.get('record:vcard:country'),
+                                        "state": builder.Storage.get('record:vcard:state'),
+                                        "zipcode": builder.Storage.get('record:vcard:zipcode'),
+                                        "locale": builder.Storage.get('record:vcard:locale'),
+                                        "phone": builder.Storage.get('record:vcard:phone'),
+                                        "targetTable": "leads",
+                                        "targetId": builder.Storage.get('record:id'),
+                                    });
+                                },
+                            );
+                        <?php endif; ?>
+                        <?php if($this->Helper->Core->isInstalled('followups')): ?>
+                            tabs.add(
+                                'calls',
+                                {
+                                    icon: "telephone",
+                                    label: builder.Locale.get("Calls"),
+                                },
+                                function(tab,nav){
+                                    card.calls = tab;
+                                    FollowupsTable("Call", builder.Storage.get('dependencies:followups'), tab, {
+                                        category: 'Call',
+                                        targetTable: "leads",
+                                        targetId: builder.Storage.get('record:id'),
+                                    });
+                                },
+                            );
+                            tabs.add(
+                                'callbacks',
+                                {
+                                    icon: "telephone-forward",
+                                    label: builder.Locale.get("Callbacks"),
+                                },
+                                function(tab,nav){
+                                    card.callbacks = tab;
+                                    FollowupsTable("Callback", builder.Storage.get('dependencies:followups'), tab, {
+                                        category: 'Callback',
+                                        targetTable: "leads",
+                                        targetId: builder.Storage.get('record:id'),
+                                    });
+                                },
+                            );
+                            tabs.add(
+                                'appointments',
+                                {
+                                    icon: "calendar2-event",
+                                    label: builder.Locale.get("Appointments"),
+                                },
+                                function(tab,nav){
+                                    card.appointments = tab;
+                                    FollowupsTable("Appointment", builder.Storage.get('dependencies:followups'), tab, {
+                                        category: 'Appointment',
+                                        targetTable: "leads",
+                                        targetId: builder.Storage.get('record:id'),
+                                    });
+                                },
+                            );
+                        <?php endif; ?>
                         <?php if($this->Helper->Core->isInstalled('services')): ?>
                             tabs.add(
                                 'services',
@@ -404,86 +402,94 @@
                                 },
                             );
                         <?php endif; ?>
-                        tabs.add(
-                            'files',
-                            {
-                                icon: "file-earmark",
-                                label: builder.Locale.get("Files"),
-                            },
-                            function(tab,nav){
-                                card.files = tab;
-                                FilesFeed(builder.Storage.get('dependencies:files') ?? [], tab, {
-                                    targetTable: "leads",
-                                    targetId: builder.Storage.get('record:id'),
-                                    isPublic: 1,
-                                });
-                            },
-                        );
-                        tabs.add(
-                            'documents',
-                            {
-                                icon: "file-earmark-richtext",
-                                label: builder.Locale.get("Documents"),
-                            },
-                            function(tab,nav){
-                                card.files = tab;
-                                docvals = {
-                                    "locale": builder.Storage.get('record:vcard:locale'),
-                                    "name": builder.Storage.get('record:vcard:name'),
-                                    "title": builder.Storage.get('record:vcard:title'),
-                                    "role": builder.Storage.get('record:vcard:role'),
-                                    "address": builder.Storage.get('record:vcard:address'),
-                                    "city": builder.Storage.get('record:vcard:city'),
-                                    "state": builder.Storage.get('record:vcard:state'),
-                                    "zipcode": builder.Storage.get('record:vcard:zipcode'),
-                                    "country": builder.Storage.get('record:vcard:country'),
-                                    "phone": builder.Storage.get('record:vcard:phone'),
-                                    "mobile": builder.Storage.get('record:vcard:mobile'),
-                                    "tollfree": builder.Storage.get('record:vcard:tollfree'),
-                                    "fax": builder.Storage.get('record:vcard:fax'),
-                                    "website": builder.Storage.get('record:vcard:website'),
-                                    "businessNumber": builder.Storage.get('record:vcard:businessNumber'),
-                                    "taxExtension": builder.Storage.get('record:vcard:taxExtension'),
-                                    "importerExtension": builder.Storage.get('record:vcard:importerExtension'),
-                                };
-                                builder.Helper.urlToBase64("/plugin/leads/logo?id="+builder.Storage.get('record:id')).then(dataURI => {
-                                    docvals.avatar = dataURI;
-                                    DocumentsFeed(builder.Storage.get('dependencies:documents') ?? [], tab, {
+                        <?php if($this->Helper->Core->isInstalled('files')): ?>
+                            tabs.add(
+                                'files',
+                                {
+                                    icon: "file-earmark",
+                                    label: builder.Locale.get("Files"),
+                                },
+                                function(tab,nav){
+                                    card.files = tab;
+                                    FilesFeed(builder.Storage.get('dependencies:files') ?? [], tab, {
                                         targetTable: "leads",
                                         targetId: builder.Storage.get('record:id'),
                                         isPublic: 1,
-                                        locale: builder.Storage.get('record:vcard:locale'),
-                                        docvals: docvals,
-                                    }, builder.Storage.get('record:vcard:locale'));
-                                });
-                            },
-                        );
-                        tabs.add(
-                            'activities',
-                            {
-                                icon: "activity",
-                                label: builder.Locale.get("Activity"),
-                            },
-                            function(tab,nav){
-                                tab.addClass('px-4 py-3');
-                                card.activities = tab;
-                                EventFeed(builder.Storage.get('dependencies:events'), tab);
-                            },
-                        );
-                        tabs.add(
-                            'related',
-                            {
-                                icon: "diagram-2",
-                                label: builder.Locale.get("Related"),
-                            },
-                            function(tab,nav){
-                                tab.addClass('px-4 py-3');
-                                card.related = tab;
-                                RelatedFeed(builder.Storage.getKey(), tab, function(feed){
-                                    card.related.feed = feed;
-                                });
-                            },
-                        );
+                                    });
+                                },
+                            );
+                        <?php endif; ?>
+                        <?php if($this->Helper->Core->isInstalled('documents')): ?>
+                            tabs.add(
+                                'documents',
+                                {
+                                    icon: "file-earmark-richtext",
+                                    label: builder.Locale.get("Documents"),
+                                },
+                                function(tab,nav){
+                                    card.files = tab;
+                                    docvals = {
+                                        "locale": builder.Storage.get('record:vcard:locale'),
+                                        "name": builder.Storage.get('record:vcard:name'),
+                                        "title": builder.Storage.get('record:vcard:title'),
+                                        "role": builder.Storage.get('record:vcard:role'),
+                                        "address": builder.Storage.get('record:vcard:address'),
+                                        "city": builder.Storage.get('record:vcard:city'),
+                                        "state": builder.Storage.get('record:vcard:state'),
+                                        "zipcode": builder.Storage.get('record:vcard:zipcode'),
+                                        "country": builder.Storage.get('record:vcard:country'),
+                                        "phone": builder.Storage.get('record:vcard:phone'),
+                                        "mobile": builder.Storage.get('record:vcard:mobile'),
+                                        "tollfree": builder.Storage.get('record:vcard:tollfree'),
+                                        "fax": builder.Storage.get('record:vcard:fax'),
+                                        "website": builder.Storage.get('record:vcard:website'),
+                                        "businessNumber": builder.Storage.get('record:vcard:businessNumber'),
+                                        "taxExtension": builder.Storage.get('record:vcard:taxExtension'),
+                                        "importerExtension": builder.Storage.get('record:vcard:importerExtension'),
+                                    };
+                                    builder.Helper.urlToBase64("/plugin/leads/logo?id="+builder.Storage.get('record:id')).then(dataURI => {
+                                        docvals.avatar = dataURI;
+                                        DocumentsFeed(builder.Storage.get('dependencies:documents') ?? [], tab, {
+                                            targetTable: "leads",
+                                            targetId: builder.Storage.get('record:id'),
+                                            isPublic: 1,
+                                            locale: builder.Storage.get('record:vcard:locale'),
+                                            docvals: docvals,
+                                        }, builder.Storage.get('record:vcard:locale'));
+                                    });
+                                },
+                            );
+                        <?php endif; ?>
+                        <?php if($this->Helper->Core->isInstalled('events')): ?>
+                            tabs.add(
+                                'activities',
+                                {
+                                    icon: "activity",
+                                    label: builder.Locale.get("Activity"),
+                                },
+                                function(tab,nav){
+                                    tab.addClass('px-4 py-3');
+                                    card.activities = tab;
+                                    EventFeed(builder.Storage.get('dependencies:events'), tab);
+                                },
+                            );
+                        <?php endif; ?>
+                        <?php if($this->Helper->Core->isInstalled('relationship')): ?>
+                            tabs.add(
+                                'related',
+                                {
+                                    icon: "diagram-2",
+                                    label: builder.Locale.get("Related"),
+                                },
+                                function(tab,nav){
+                                    tab.addClass('px-4 py-3');
+                                    card.related = tab;
+                                    RelatedFeed(builder.Storage.getKey(), tab, function(feed){
+                                        card.related.feed = feed;
+                                    });
+                                },
+                            );
+                        <?php endif; ?>
                     },
                 );
 
