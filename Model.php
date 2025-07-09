@@ -1,394 +1,151 @@
 <?php
 
-/**
- * Core Framework - LeadsModel
- *
- * @license    MIT (https://mit-license.org/)
- * @author     Louis Ouellet <louis@laswitchtech.com>
- */
-
 // Import additionnal class into the global namespace
-use \LaswitchTech\Core\Abstracts\Model;
+use \LaswitchTech\Core\Base\BaseModel;
 
-class LeadsModel extends Model {
+class LeadsModel extends BaseModel {
 
     /**
-     * Retrieve Leads
-     *
-     * @param int $organization
-     * @return array
+     * Constructor
      */
-    public function list(int $organization): array
+    public function __construct()
     {
-        // Create the Query
-        $Query = $this->Database->query()
-            ->table('leads')
-            ->select('*')
-            ->join('owner', 'users', 'username')
-            ->join('assignedTo', 'users', 'id')
-            ->join('vcard', 'vcards', 'id')
-            ->join('task', 'tasks', 'id')
-            ->join('client', 'clients', 'id')
-            ->join('organization', 'organizations', 'id')
-            ->order('vcard.name', 'ASC')
-            ->filter()
-            ->where('organization', $organization)
-            ->where('isArchived', 0)
-            ->where('id', 9999, '<>');
+        // Call the parent constructor
+        parent::__construct();
 
-        // Retrieve the Results
-        $result = $Query->result();
-
-        // Decode JSON Fields
-        foreach($result as $key => $record){
-            $result[$key]['task']['process'] = json_decode($record['task']['process'] ?? '[]', true);
-            $result[$key]['vcard']['tags'] = json_decode($record['vcard']['tags'] ?? '[]', true);
-            $result[$key]['vcard']['industries'] = json_decode($record['vcard']['industries'] ?? '[]', true);
-        }
-
-        // Return the Results
-        return $result;
+        // Initialize the Model
+        $this->init('leads');
     }
 
     /**
-     * Retrieve Leads
+     * Retrieve multiple records
      *
-     * @param int $organization
-     * @param int $user
+     * @param array $conditions
      * @return array
      */
-    public function assigned(int $organization, int $user): array
+    public function fetchAll(array $conditions = [], string $conjunction = 'AND'): array
     {
         // Create the Query
         $Query = $this->Database->query()
-            ->table('leads')
+            ->table($this->table)
             ->select('*')
             ->join('owner', 'users', 'username')
             ->join('assignedTo', 'users', 'id')
             ->join('vcard', 'vcards', 'id')
             ->join('task', 'tasks', 'id')
+            ->join('delegation', 'delegations', 'id')
+            ->join('firm', 'firms', 'id')
             ->join('client', 'clients', 'id')
             ->join('organization', 'organizations', 'id')
-            ->order('vcard.name', 'ASC')
-            ->filter()
-            ->where('assignedTo', $user)
-            ->where('organization', $organization)
-            ->where('isArchived', 0)
-            ->where('id', 9999, '<>');
-
-        // Retrieve the Results
-        $result = $Query->result();
-
-        // Decode JSON Fields
-        foreach($result as $key => $record){
-            $result[$key]['task']['process'] = json_decode($record['task']['process'] ?? '[]', true);
-            $result[$key]['vcard']['tags'] = json_decode($record['vcard']['tags'] ?? '[]', true);
-            $result[$key]['vcard']['industries'] = json_decode($record['vcard']['industries'] ?? '[]', true);
-        }
-
-        // Return the Results
-        return $result;
-    }
-
-    /**
-     * Retrieve Leads
-     *
-     * @param int $organization
-     * @param int $user
-     * @return array
-     */
-    public function signed(int $organization, int $user): array
-    {
-        // Create the Query
-        $Query = $this->Database->query()
-            ->table('leads')
-            ->select('*')
-            ->join('owner', 'users', 'username')
-            ->join('assignedTo', 'users', 'id')
-            ->join('vcard', 'vcards', 'id')
-            ->join('task', 'tasks', 'id')
-            ->join('client', 'clients', 'id')
-            ->join('organization', 'organizations', 'id')
-            ->order('vcard.name', 'ASC')
-            ->filter()
-            ->where('client', null, 'IS NOT NULL')
-            ->where('assignedTo', $user)
-            ->where('organization', $organization)
-            ->where('isArchived', 0)
-            ->where('id', 9999, '<>');
-
-        // Retrieve the Results
-        $result = $Query->result();
-
-        // Decode JSON Fields
-        foreach($result as $key => $record){
-            $result[$key]['task']['process'] = json_decode($record['task']['process'] ?? '[]', true);
-            $result[$key]['vcard']['tags'] = json_decode($record['vcard']['tags'] ?? '[]', true);
-            $result[$key]['vcard']['industries'] = json_decode($record['vcard']['industries'] ?? '[]', true);
-        }
-
-        // Return the Results
-        return $result;
-    }
-
-    /**
-     * Retrieve Lead's Details
-     *
-     * @param int $id
-     * @return array
-     */
-    public function get(int $id): array
-    {
-        // Create the Query
-        $Query = $this->Database->query()
-            ->table('leads')
-            ->select('*')
-            ->join('owner', 'users', 'username')
-            ->join('assignedTo', 'users', 'id')
-            ->join('vcard', 'vcards', 'id')
-            ->join('task', 'tasks', 'id')
-            ->join('client', 'clients', 'id')
-            ->join('organization', 'organizations', 'id')
-            ->order('vcard.name', 'ASC')
+            ->index($this->primary)
             ->filter()
             ->where('id', 9999, '<>')
-            ->where('isArchived', 1, '<>')
-            ->filter()
-            ->where('id', $id)
-            ->limit(1);
+            ->where('organization', $this->Auth->user()->organization()->id);
+
+        // Check if the conditions are empty
+        if(!empty($conditions)){
+
+            // Add a Filter
+            $Query->filter();
+
+            // Add the Conditions
+            foreach($conditions as $key => $condition){
+
+                // Check if the key exists in the definition
+                if(!array_key_exists($condition['key'], $this->definition)){
+
+                    // Remove the key from the data
+                    unset($conditions[$key]);
+                    continue;
+                }
+
+                // Add the condition to the Query
+                $Query->where($condition["key"], $condition["value"], $condition["operator"], $conjunction);
+            }
+        }
 
         // Retrieve the Results
-        $result = $Query->result();
+        $records = $Query->fetch();
 
-        // Decode JSON Fields
-        foreach($result as $key => $record){
+        // Loop through the records to process them
+        foreach($records as $key => $record){
 
-            // Decode JSON Fields
-            $result[$key]['task']['process'] = json_decode($record['task']['process'] ?? '[]', true);
-            $result[$key]['vcard']['tags'] = json_decode($record['vcard']['tags'] ?? '[]', true);
-            $result[$key]['vcard']['industries'] = json_decode($record['vcard']['industries'] ?? '[]', true);
+            // Overwrite the record with the processed one
+            $records[$key] = $this->process($record);
 
-            // Retrieve the vcard's avatar
-            if($record['vcard']['avatar']){
-                $Query = $this->Database->query()
-                    ->table('files')
-                    ->select('*')
-                    ->where('id', $record['vcard']['avatar'])
-                    ->limit(1);
-                $result[$key]['vcard']['avatar'] = $Query->fetch()[0] ?? $record['vcard']['avatar'];
+            // Check if the record has a task
+            if(array_key_exists('task', $record) && !empty($record['task'])){
+
+                // Process the task
+                $records[$key]['task']['process'] = json_decode($record['task']['process'] ?? "[]", true);
             }
 
-            // Retrieve the Events
-            $Query = $this->Database->query()
-                ->table('events')
-                ->select('*')
-                ->where('targetTable', 'leads')
-                ->where('targetId', $record['id'])
-                ->index('id');
-            $result[$key]['events'] = $Query->result();
-            $Query = $this->Database->query()
-                ->table('events')
-                ->select('*')
-                ->where('targetTable', 'vcards')
-                ->where('targetId', $record['vcard']['id'])
-                ->index('id');
-            $result[$key]['events'] = array_merge($result[$key]['events'], $Query->result());
+            // Check if the record has a vcard
+            if(array_key_exists('vcard', $record) && !empty($record['vcard'])){
 
-            // Retrieve the Notes
-            $Query = $this->Database->query()
-                ->table('notes')
-                ->select('*')
-                ->join('owner', 'users', 'username')
-                ->index('id')
-                ->filter()
-                ->where('id', 9999, '<>')
-                ->where('isArchived', 1, '<>')
-                ->where('targetTable', 'leads')
-                ->where('targetId', $record['id'])
-                ->filter('OR')
-                ->where('id', 9999, '<>')
-                ->where('isArchived', 1, '<>')
-                ->where('targetTable', 'vcards')
-                ->where('targetId', $record['vcard']['id']);
-            $result[$key]['notes'] = $Query->fetch();
-
-            // Retrieve the Contacts
-            $Query = $this->Database->query()
-                ->table('contacts')
-                ->select('*')
-                ->join('owner', 'users', 'username')
-                ->join('vcard', 'vcards', 'id')
-                ->filter()
-                ->where('organization', $record['organization']['id'])
-                ->where('targetTable', 'leads')
-                ->where('targetId', $record['id'])
-                ->where('isArchived', 1, '<>')
-                ->filter('OR')
-                ->where('organization', $record['organization']['id'])
-                ->where('targetTable', 'clients')
-                ->where('targetId', $record['client']['id'])
-                ->where('isArchived', 1, '<>')
-                ->index('id');
-            $result[$key]['contacts'] = $Query->result();
-
-            // Retrieve the Files
-            $Query = $this->Database->query()
-                ->table('files')
-                ->select('*')
-                ->join('owner', 'users', 'username')
-                ->filter()
-                ->where('organization', $record['organization']['id'])
-                ->where('targetTable', 'leads')
-                ->where('targetId', $record['id'])
-                ->where('isArchived', 1, '<>')
-                ->filter('OR')
-                ->where('organization', $record['organization']['id'])
-                ->where('targetTable', 'clients')
-                ->where('targetId', $record['client']['id'])
-                ->where('isArchived', 1, '<>')
-                ->index('id');
-            $result[$key]['files'] = $Query->result();
-
-            // Retrieve the Documents
-            $Query = $this->Database->query()
-                ->table('documents')
-                ->select('*')
-                ->join('owner', 'users', 'username')
-                ->join('doctype', 'doctypes', 'id')
-                ->join('organization', 'organizations', 'id')
-                ->join('letterhead', 'files', 'id')
-                ->filter()
-                ->where('isArchived', 1, '<>')
-                ->where('organization', $record['organization']['id'])
-                ->where('targetTable', 'leads')
-                ->where('targetId', $record['id'])
-                ->filter('OR')
-                ->where('isArchived', 1, '<>')
-                ->where('organization', $record['organization']['id'])
-                ->where('targetTable', 'clients')
-                ->where('targetId', $record['client']['id'])
-                ->index('id');
-            $result[$key]['documents'] = $Query->result();
-
-            // Retrieve the Follow-ups
-            $result[$key]['followups'] = [];
-            $Query = $this->Database->query()
-                ->table('followups')
-                ->select('*')
-                ->join('owner', 'users', 'username')
-                ->join('assignedTo', 'users', 'id')
-                ->join('task', 'tasks', 'id')
-                ->join('vcard', 'vcards', 'id')
-                ->join('organization', 'organizations', 'id')
-                ->filter()
-                ->where('organization', $record['organization']['id'])
-                ->where('targetTable', 'leads')
-                ->where('targetId', $record['id'])
-                ->where('isArchived', 1, '<>')
-                ->filter('OR')
-                ->where('organization', $record['organization']['id'])
-                ->where('targetTable', 'clients')
-                ->where('targetId', $record['client']['id'])
-                ->where('isArchived', 1, '<>')
-                ->index('id');
-            foreach($Query->result() as $followup){
-
-                // Decode JSON Fields
-                $followup['task']['process'] = json_decode($followup['task']['process'] ?? '[]', true);
-                $followup['vcard']['tags'] = json_decode($followup['vcard']['tags'] ?? '[]', true);
-                $followup['vcard']['industries'] = json_decode($followup['vcard']['industries'] ?? '[]', true);
-                $result[$key]['followups'][$followup['id']] = $followup;
+                // Process the vcard
+                $records[$key]['vcard']['tags'] = json_decode($record['vcard']['tags'] ?? "[]", true);
+                $records[$key]['vcard']['industries'] = json_decode($record['vcard']['industries'] ?? "[]", true);
             }
         }
 
         // Return the Results
-        return $result[array_key_first($result)] ?? [];
+        return $records;
     }
 
     /**
-     * Create a new lead and return the id
-     *
-     * @param array $data
-     * @return int
-     */
-    public function create(array $data): int
-    {
-        // Create the Query
-        $Query = $this->Database->query()
-            ->table('leads')
-            ->insert($data);
-
-        // Execute the Query
-        $affectedRows = $Query->execute();
-
-        // Execute the Query
-        return $Query->lastId();
-    }
-
-    /**
-     * Update a lead
-     *
-     * @param int $id
-     * @param array $data
-     * @return int
-     */
-    public function update(int $id, array $data): int
-    {
-        // Create the Query
-        $Query = $this->Database->query()
-            ->table('leads')
-            ->update($data)
-            ->where('id', $id);
-
-        // Execute the Query
-        return $Query->execute();
-    }
-
-    /**
-     * Retrieve the Lead's Logo
+     * Retrieve a single record
      *
      * @param int $id
      * @return array
      */
-    public function logo(int $id): array
+    public function fetch(int $id): array
     {
-        // Create a Query
+        // Create the Query
         $Query = $this->Database->query()
-            ->table('leads')
+            ->table($this->table)
             ->select('*')
+            ->join('owner', 'users', 'username')
+            ->join('assignedTo', 'users', 'id')
+            ->join('vcard', 'vcards', 'id')
+            ->join('task', 'tasks', 'id')
+            ->join('delegation', 'delegations', 'id')
+            ->join('firm', 'firms', 'id')
+            ->join('client', 'clients', 'id')
+            ->join('organization', 'organizations', 'id')
             ->filter()
-            ->where('id', $id)
+            ->where('id', 9999, '<>')
+            ->filter()
+            ->where($this->primary, $id)
+            ->where('organization', $this->Auth->user()->organization()->id)
             ->limit(1);
 
-        // Retrieve the User
-        $lead = $Query->result();
+        // Retrieve the record
+        $records = $Query->fetch();
 
-        // Check if the lead exists
-        if($lead){
+        // Loop through the records to process them
+        foreach($records as $key => $record){
 
-            // Select the lead
-            $lead = $lead[array_key_first($lead)];
+            // Overwrite the record with the processed one
+            $records[$key] = $this->process($record);
 
-            // Create the Query
-            $Query = $this->Database->query()
-                ->table('vcards')
-                ->select('*')
-                ->join('avatar', 'files', 'id')
-                ->order('id', 'ASC')
-                ->filter()
-                ->where('id', 9999, '<>')
-                ->filter()
-                ->where('id', $lead['vcard'])
-                ->limit(1);
+            // Check if the record has a task
+            if(array_key_exists('task', $record) && !empty($record['task'])){
 
-            // Retrieve the vCard
-            $vCard = $Query->result();
+                // Process the task
+                $records[$key]['task']['process'] = json_decode($record['task']['process'] ?? "[]", true);
+            }
 
-            // Return the vCard
-            $lead['vcard'] = $vCard[array_key_first($vCard)] ?? [];
+            // Check if the record has a vcard
+            if(array_key_exists('vcard', $record) && !empty($record['vcard'])){
+
+                // Process the vcard
+                $records[$key]['vcard']['tags'] = json_decode($record['vcard']['tags'] ?? "[]", true);
+                $records[$key]['vcard']['industries'] = json_decode($record['vcard']['industries'] ?? "[]", true);
+            }
         }
 
-        // Return the Lead
-        return $lead;
+        // Return the record or an empty array if not found
+        return $records[array_key_first($records)] ?? [];
     }
 }
