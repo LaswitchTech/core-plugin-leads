@@ -1,14 +1,8 @@
-<!--
-  Core Framework - View File
-
-  @license    MIT (https://mit-license.org/)
-  @author     Louis Ouellet <louis@laswitchtech.com>
--->
 <div class="col-12" id="layout"></div>
 <script>
     $(document).ready(function(){
         $.ajax({
-            url: '/endpoint.php/leads/details?id=<?= $this->Request->getParams('GET', 'id') ?>',
+            url: '/api/leads/fetch?id=<?= $this->Request->getParams('GET', 'id') ?>',
             type: 'GET',dataType: 'json',
             error: function(xhr, status, error) {
                 let color = 'info', icon = 'question-circle', title = builder.Locale.get(xhr.statusText), content = builder.Locale.get(xhr.responseText);
@@ -22,7 +16,7 @@
             success: function(response) {
 
                 // Configure Storage
-                builder.Storage.setKey('leads:'+response.record.id);
+                builder.Storage.setKey('lead:'+response.record.id);
                 builder.Storage.set(response);
                 console.log(builder.Storage.get())
 
@@ -40,7 +34,7 @@
                 // Set a default value for the logo
                 var Logo = builder.Helper.favicon(builder.Storage.get('record:vcard:website') ?? window.location.origin);
                 if(builder.Storage.get('record:vcard:avatar') != null && typeof builder.Storage.get('record:vcard:avatar:uuid') !== 'undefined'){
-                    Logo = window.location.origin + '/files/get?uuid=' + builder.Storage.get('record:vcard:avatar:uuid');
+                    Logo = window.location.origin + '/plugin/leads/logo?id=' + builder.Storage.get('record:id');
                 }
 
                 // Layout
@@ -246,7 +240,7 @@
                         for(const [key, value] of Object.entries(builder.Storage.get('record:vcard'))){
                             switch(key){
                                 case 'address':
-                                    const address = builder.Storage.get('record:vcard:address') + ', ' + builder.Storage.get('record:vcard:city') + ', ' + builder.Storage.get('record:vcard:state') + ' ' + builder.Storage.get('record:vcard:zipcode') + ', ' + builder.Storage.get('record:vcard:country');
+                                    const address = builder.Storage.get('record:vcard:address') + ', ' + builder.Storage.get('record:vcard:city') + ', ' + builder.Storage.get('record:vcard:state:name') + ' ' + builder.Storage.get('record:vcard:zipcode') + ', ' + builder.Storage.get('record:vcard:country:name');
                                     component.body.row[key] = $(document.createElement('div')).addClass('col-8').appendTo(component.body.row);
                                     component.body.row[key].header = $(document.createElement('p')).addClass('fw-bold text-capitalize text-nowrap').text(builder.Locale.get(key)).appendTo(component.body.row[key]);
                                     component.body.row[key].value = $(document.createElement('p')).addClass('text-nowrap m-0').text(address).appendTo(component.body.row[key]);
@@ -261,7 +255,7 @@
                                 case 'tags':
                                     component.body.row[key] = $(document.createElement('div')).addClass('col-6').appendTo(component.body.row);
                                     component.body.row[key].header = $(document.createElement('p')).addClass('fw-bold text-capitalize text-nowrap').text(builder.Locale.get(key)).appendTo(component.body.row[key]);
-                                    for(const [k, tag] of Object.entries(value)){
+                                    for(const [k, tag] of Object.entries(value ?? [])){
                                         // Create Button
                                         const object = $(document.createElement('span'))
                                             .addClass('badge text-bg-warning m-0 me-1 mb-1')
@@ -274,7 +268,7 @@
                                 case 'industries':
                                     component.body.row[key] = $(document.createElement('div')).addClass('col-6').appendTo(component.body.row);
                                     component.body.row[key].header = $(document.createElement('p')).addClass('fw-bold text-capitalize text-nowrap').text(builder.Locale.get(key)).appendTo(component.body.row[key]);
-                                    for(const [k, industry] of Object.entries(value)){
+                                    for(const [k, industry] of Object.entries(value ?? [])){
                                         // Create Button
                                         const object = $(document.createElement('span'))
                                             .addClass('badge text-bg-info m-0 me-1 mb-1')
@@ -395,7 +389,10 @@
                                 },
                                 function(tab,nav){
                                     card.services = tab;
-                                    ServicesFeed(builder.Storage.getKey(), tab, function(feed, component){
+                                    ServicesFeed(builder.Storage.getKey(), tab, {
+                                        targetTable: "leads",
+                                        targetId: builder.Storage.get('record:id'),
+                                    }, function(feed, component){
                                         card.services.feed = feed;
                                         card.services.component = component;
                                     });
@@ -435,9 +432,9 @@
                                         "role": builder.Storage.get('record:vcard:role'),
                                         "address": builder.Storage.get('record:vcard:address'),
                                         "city": builder.Storage.get('record:vcard:city'),
-                                        "state": builder.Storage.get('record:vcard:state'),
+                                        "state": builder.Storage.get('record:vcard:state:name'),
                                         "zipcode": builder.Storage.get('record:vcard:zipcode'),
-                                        "country": builder.Storage.get('record:vcard:country'),
+                                        "country": builder.Storage.get('record:vcard:country:name'),
                                         "phone": builder.Storage.get('record:vcard:phone'),
                                         "mobile": builder.Storage.get('record:vcard:mobile'),
                                         "tollfree": builder.Storage.get('record:vcard:tollfree'),
@@ -460,7 +457,7 @@
                                 },
                             );
                         <?php endif; ?>
-                        <?php if($this->Helper->Core->isInstalled('events')): ?>
+                        <?php if($this->Helper->Core->isInstalled('event')): ?>
                             tabs.add(
                                 'activities',
                                 {
@@ -470,7 +467,7 @@
                                 function(tab,nav){
                                     tab.addClass('px-4 py-3');
                                     card.activities = tab;
-                                    EventFeed(builder.Storage.get('dependencies:events'), tab);
+                                    EventFeed(builder.Storage.get('dependencies:event'), tab);
                                 },
                             );
                         <?php endif; ?>
@@ -484,7 +481,7 @@
                                 function(tab,nav){
                                     tab.addClass('px-4 py-3');
                                     card.related = tab;
-                                    RelatedFeed(builder.Storage.getKey(), tab, function(feed){
+                                    RelationshipFeed(builder.Storage.getKey(), tab, 'leads', function(feed){
                                         card.related.feed = feed;
                                     });
                                 },

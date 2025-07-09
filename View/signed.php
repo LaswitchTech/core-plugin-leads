@@ -1,15 +1,17 @@
-<!--
-  Core Framework - View File
-
-  @license    MIT (https://mit-license.org/)
-  @author     Louis Ouellet <louis@laswitchtech.com>
--->
 <div class="col-12" id="layout"></div>
 <script>
     $(document).ready(function(){
         $.ajax({
-            url: '/endpoint.php/leads/signed',
-            type: 'GET',dataType: 'json',
+            url: '/api/leads/fetchAll',
+            headers: {'X-CSRF-Authorization': CSRF_KEY},
+            type: 'POST',dataType: 'json',
+            data: {
+                conditions: [
+                    {key: 'isArchived', operator: '<>', value: 1},
+                    {key: 'assignedTo', operator: '=', value: USER_ID},
+                    {key: 'client', operator: 'IS NOT NULL', value: null},
+                ]
+            },
             error: function(xhr, status, error) {
                 let color = 'info', icon = 'question-circle', title = builder.Locale.get(xhr.statusText), content = builder.Locale.get(xhr.responseText);
                 switch(xhr.status){
@@ -20,7 +22,11 @@
                 builder.Component("alert","#layout",{icon:icon,color:color,title:title},function(alert,component){component.content.html('<pre class="m-0 p-2">'+content+'</pre>');});
             },
             success: function(response) {
-                console.log(response);
+
+                // Configure Storage
+                builder.Storage.setKey('leads:signed');
+                builder.Storage.set(response);
+                console.log(builder.Storage.get())
 
                 // Set Actions
                 var actions = {
@@ -104,7 +110,7 @@
                                 return object.prop('outerHTML');
                             }},
                             { target: 4, visible: false, title: builder.Locale.get('Status'), name: 'status', data: 'status', render: function(data, type, row) {
-                                if(row.task.progress == 0) {
+                                if(row.task.process === null || typeof row.task.process[row.task.progress] === "undefined") {
                                     return '<h5><span class="badge text-bg-success"><i class="me-1 bi bi-asterisk"></i>'+builder.Locale.get('New')+'</span></h5>';
                                 } else {
                                     return '<h5><span class="badge text-bg-'+row.task.process[row.task.progress].color+'"><i class="me-1 bi bi-'+row.task.process[row.task.progress].icon+'"></i>'+row.task.process[row.task.progress].name+'</span></h5>';
@@ -268,7 +274,7 @@
                         component.table._component.table.addClass('z-2');
 
                         // Add Records to Layout
-                        for(const [key, record] of Object.entries(response)){
+                        for(const [key, record] of Object.entries(builder.Storage.get('records'))){
                             layout.add(record);
                         }
                     },

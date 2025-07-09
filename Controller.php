@@ -1,12 +1,5 @@
 <?php
 
-/**
- * Core Framework - LeadsController
- *
- * @license    MIT (https://mit-license.org/)
- * @author     Louis Ouellet <louis@laswitchtech.com>
- */
-
 // Import additionnal class into the global namespace
 use \LaswitchTech\Core\Objects;
 use \LaswitchTech\Core\Abstracts\Controller;
@@ -44,18 +37,18 @@ class LeadsController extends Controller {
      */
     public function logoAction(): array
     {
-        // Import Global Variables
-        global $CONFIG;
-
         // Retrieve the parameters
         $id = $this->Request->getParams('GET', 'id') ?? null;
         $size = $this->Request->getParams('GET', 'size') ?? 128;
 
         // Retrieve the lead
-        $lead = $this->Model->Leads->logo($id);
+        $lead = $this->Model->Leads->fetch($id);
 
         // Check if user was retrieved
-        if(isset($lead['vcard'])){
+        if(!empty($lead)){
+
+            // Retrieve the vcard
+            $lead['vcard'] = $this->Model->Vcards->fetch($lead['vcard']['id']);
 
             // Check if the lead has an avatar
             if($lead['vcard']['avatar']['uuid']){

@@ -1,10 +1,3 @@
-//
-//   Core Framework - Script file
-//
-//   @license    MIT (https://mit-license.org/)
-//   @author     Louis Ouellet <louis@laswitchtech.com>
-//
-
 const LeadForm = function(form,values = {},modal = null){
 
     // Initialize Values
@@ -38,20 +31,6 @@ const LeadForm = function(form,values = {},modal = null){
             }
         }
     }
-
-    // csrf
-    form.add(
-        {
-            name: CSRF_KEY,
-            label: 'csrf',
-            icon: 'hash',
-            type: 'hidden',
-            value: CSRF_TOKEN,
-        },
-        function(input,form){
-            input.css('display','none');
-        },
-    );
 
     // name
     form.add(
@@ -377,7 +356,7 @@ const LeadModalArchive = function(lead, table = null, row = null){
 
                         // AJAX Request
                         $.ajax({
-                            url: '/endpoint.php/leads/archive?id='+lead.id,
+                            url: '/api/leads/archive?id='+lead.id,
                             type: 'GET',dataType: 'json',
                             success: function(response) {
 
@@ -1130,7 +1109,7 @@ const LeadsImportStart = function(Records, callback){
 };
 const LeadsImport = function(dt){
     $.ajax({
-        url: '/endpoint.php/vcards/describe',
+        url: '/api/vcards/describe',
         type: 'GET',dataType: 'json',
         success: function(response) {
 
@@ -1182,7 +1161,7 @@ const LeadsImport = function(dt){
 
                             // AJAX Request
                             $.ajax({
-                                url: '/endpoint.php/leads/create',
+                                url: '/api/leads/create',
                                 headers: {'X-CSRF-Authorization': CSRF_KEY},
                                 type: 'POST',dataType: 'json',
                                 data: Record,
@@ -1216,7 +1195,7 @@ const LeadsImport = function(dt){
 
                                     // AJAX Request
                                     $.ajax({
-                                        url: '/endpoint.php/files/upload',
+                                        url: '/api/files/upload',
                                         headers: {'X-CSRF-Authorization': CSRF_KEY},
                                         type: 'POST',dataType: 'json',
                                         data: fileData,
@@ -1239,7 +1218,7 @@ const LeadsImport = function(dt){
 
                                                     // AJAX Request
                                                     $.ajax({
-                                                        url: '/endpoint.php/contacts/create',
+                                                        url: '/api/contacts/create',
                                                         headers: {'X-CSRF-Authorization': CSRF_KEY},
                                                         type: 'POST',dataType: 'json',
                                                         data: requestData,
@@ -1247,10 +1226,6 @@ const LeadsImport = function(dt){
                                                             console.log('contacts/create', xhr, status, response, requestData);
                                                         },
                                                         success: function(response) {
-
-                                                            // Update the CSRF
-                                                            CSRF_KEY = response.CSRF.key;
-                                                            CSRF_TOKEN = response.CSRF.token;
 
                                                             // Check if this is the last contact
                                                             if(parseInt(arrayKey) === (Record.contacts.length - 1)){
@@ -1281,10 +1256,10 @@ const LeadsAssignSelect = function(callback){
 
     // AJAX Request
     $.ajax({
-        url: '/endpoint.php/auth/colleagues',
+        url: '/api/auth/users',
         type: 'GET',dataType: 'json',
         success: function(response) {
-            var members = response;
+            var members = response.records;
             var options = [];
             for(const [id, member] of Object.entries(members)){
                 options.push({id: id, text: member.username});
@@ -1443,38 +1418,38 @@ const LeadsAssign = function(dt){
         // Start the assignment process
         LeadsAssignStart(Records,function(Record,callback){
 
-            // Create a task object
-            var taskData = {
-                id: Record.task.id,
-                assignedTo: userId,
-            };
-            taskData[CSRF_KEY] = CSRF_TOKEN;
-
             // AJAX Request
             $.ajax({
-                url: '/endpoint.php/tasks/assign?id='+taskData.id,
+                url: '/api/leads/update?id='+Record.id,
+                headers: {'X-CSRF-Authorization': CSRF_KEY},
                 type: 'POST',dataType: 'json',
-                data: taskData,
+                data: {assignedTo: userId},
                 success: function(response) {
 
-                    // Update CSRF Token
-                    CSRF_KEY = response.CSRF.key;
-                    CSRF_TOKEN = response.CSRF.token;
+                    // AJAX Request
+                    $.ajax({
+                        url: '/api/tasks/update?id='+Record.task.id,
+                        headers: {'X-CSRF-Authorization': CSRF_KEY},
+                        type: 'POST',dataType: 'json',
+                        data: {assignedTo: userId},
+                        success: function(response) {
 
-                    // Update Assigned User's Avatar
-                    $('[data-type="avatar"][data-task="'+Record.task.id+'"]').attr({
-                        "alt": response.record.assignedTo.username,
-                        "src": "/avatar?username="+response.record.assignedTo.username,
+                            // Update Assigned User's Avatar
+                            $('[data-type="avatar"][data-task="'+Record.task.id+'"]').attr({
+                                "alt": response.record.assignedTo.username,
+                                "src": "/avatar?username="+response.record.assignedTo.username,
+                            });
+
+                            // Update Assigned User's Username
+                            $('[data-type="username"][data-task="'+Record.task.id+'"]').attr({
+                                "title":response.record.assignedTo.username,
+                                "data-bs-title":response.record.assignedTo.username,
+                            }).text(response.record.assignedTo.username);
+
+                            // Execute the callback
+                            callback();
+                        }
                     });
-
-                    // Update Assigned User's Username
-                    $('[data-type="username"][data-task="'+Record.task.id+'"]').attr({
-                        "title":response.record.assignedTo.username,
-                        "data-bs-title":response.record.assignedTo.username,
-                    }).text(response.record.assignedTo.username);
-
-                    // Execute the callback
-                    callback();
                 }
             });
         });
@@ -1617,7 +1592,7 @@ const LeadsArchive = function(dt){
 
             // AJAX Request
             $.ajax({
-                url: '/endpoint.php/leads/archive?id='+Record.id,
+                url: '/api/leads/archive?id='+Record.id,
                 type: 'GET',dataType: 'json',
                 success: function(response) {
 

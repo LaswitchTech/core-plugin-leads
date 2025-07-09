@@ -1,439 +1,788 @@
 <?php
 
-/**
- * Core Framework - LeadsEndpoint
- *
- * @license    MIT (https://mit-license.org/)
- * @author     Louis Ouellet <louis@laswitchtech.com>
- */
-
 // Import additionnal class into the global namespace
-use \LaswitchTech\Core\Abstracts\Endpoint;
+use \LaswitchTech\Core\Base\BaseEndpoint;
 
-class LeadsEndpoint extends Endpoint {
+class LeadsEndpoint extends BaseEndpoint {
 
     /**
      * Constructor
      */
     public function __construct()
     {
-
-        // Call Parent Constructor
+        // Call the parent constructor
         parent::__construct();
 
-        // Retrieve the namespace
-        $namespace = $this->Request->getNamespace();
+        // Initialize the Endpoint
+        $this->init('leads');
 
-        // Set Global access
-        $this->Public = false;
-
-        // Set Level
-        switch($namespace){
-            case "/leads/index":
-            case "/leads/assigned":
-            case "/leads/signed":
-            case "/leads/details":
-                $this->Level = 1;
-                break;
-            case "/leads/create":
-                $this->Level = 2;
-                break;
-            case "/leads/archive":
-            case "/leads/recover":
-                $this->Level = 4;
-                break;
-        }
+        // Set Properties
+        $this->required = ['name','email','phone','locale'];
+        $this->optional = ['tollfree','mobile','fax','tags','dba','industries','businessNumber','taxExtension','importerExtension','website','address','city','country','state','zipcode'];
     }
 
     /**
-     * Retrieve Leads
+     * Retrieve a record
      */
-    public function indexAction(): array
+    public function fetchAction(): array
     {
-        return ["status" => 200, "message" => "OK", "data" => $this->Model->Leads->list($this->Auth->user()->organization()->id)];
-    }
+        // Call the parent constructor
+        $message = parent::fetchAction();
 
-    /**
-     * Retrieve Assigned Leads
-     */
-    public function assignedAction(): array
-    {
-        return ["status" => 200, "message" => "OK", "data" => $this->Model->Leads->assigned($this->Auth->user()->organization()->id, $this->Auth->user()->id)];
-    }
-
-    /**
-     * Retrieve Signed Leads
-     */
-    public function signedAction(): array
-    {
-        return ["status" => 200, "message" => "OK", "data" => $this->Model->Leads->signed($this->Auth->user()->organization()->id, $this->Auth->user()->id)];
-    }
-
-    /**
-     * Retrieve Lead's Details
-     */
-    public function detailsAction(): array
-    {
-        $message = ["status" => 200, "message" => "OK", "data" => []];
-        $lead = $this->Model->Leads->get(intval($this->Request->getParams('GET','id')));
-        if(empty($lead)){
-            $message = ["status" => 404, "message" => "Not Found", "data" => "Could not find the requested lead."];
-        } else {
-            if($lead['organization']['id'] != $this->Auth->user()->organization()->id){
-                $message = ["status" => 403, "message" => "Forbidden", "data" => "You are not allowed to access this lead."];
-            }
-            if(($lead['assignedTo']['id'] != $this->Auth->user()->id) && !$this->Auth->isAuthorized("AccountManager", 1)){
-                $message = ["status" => 403, "message" => "Forbidden", "data" => "You are not allowed to access this lead."];
-            }
-        }
+        // Check if the records is accessible
         if($message['status'] == 200){
-            $lead['task'] = $this->Model->Tasks->fetch(intval($lead['task']['id']));
-            $relationships = $this->Model->Relationship->get('leads', $lead['id']);
-            foreach($this->Model->Relationship->get('vcards', $lead['vcard']['id']) as $table => $relations){
-                foreach($relations as $id => $record){
-                    $relationships[$table][$id] = $record;
+
+            // Check if the vCards Plugin is accessible
+            if($this->Helper->Core->isInstalled('vcards')){
+                $message['data']['record']['vcard'] = $this->Model->Vcards->fetch(intval($message['data']['record']['vcard']['id']));
+            }
+
+            // Check if the Tasks Plugin is accessible
+            if($this->Helper->Core->isInstalled('tasks')){
+                $message['data']['record']['task'] = $this->Model->Tasks->fetch(intval($message['data']['record']['task']['id']));
+            }
+
+            // // Check if the Delegations Plugin is accessible
+            // if($this->Helper->Core->isInstalled('delegations')){
+            //     $message['data']['record']['delegation'] = $this->Model->Delegations->fetch(intval($message['data']['record']['delegation']['id']));
+            // }
+
+            // // Check if the Firms Plugin is accessible
+            // if($this->Helper->Core->isInstalled('firms')){
+            //     $message['data']['record']['firm'] = $this->Model->Firms->fetch(intval($message['data']['record']['firm']['id']));
+            // }
+
+            // Check if the Relationship Plugin is accessible
+            if($this->Helper->Core->isInstalled('relationship')){
+                $message['data']['dependencies']['relationship'] = $this->Model->Relationship->get($this->basename, $message['data']['record']['id']);
+                if($this->Helper->Core->isInstalled('vcards') && array_key_exists('vcard', $message['data']['record'])){
+                    $message['data']['dependencies']['relationship'] = array_merge(
+                        $message['data']['dependencies']['relationship'],
+                        $this->Model->Relationship->get('vcards', $message['data']['record']['vcard']['id'])
+                    );
                 }
             }
-            $message['data'] = [
-                "record" => $lead,
-                "dependencies" => [
-                    "contacts" => $lead['contacts'] ?? [], // Temporary fix for the Listings
-                    "documents" => $lead['documents'] ?? [], // Temporary fix for the Listings
-                    "events" => $lead['events'] ?? [], // Temporary fix for the Listings
-                    "files" => $lead['files'] ?? [], // Temporary fix for the Listings
-                    "followups" => $lead['followups'] ?? [], // Temporary fix for the Listings
-                    "notes" => $lead['notes'] ?? [], // Temporary fix for the Listings
-                ],
-                "relationships" => $relationships,
-            ];
 
-            // // Check if the Contacts is accessible
-            // if($this->Helper->Core->isInstalled('contacts')){
-            //     $message['data']['dependencies']['contacts'] = $this->Model->Contacts->fetchAll([
-            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
-            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
-            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
-            //     ]);
-            // }
+            // Check if the Contacts is accessible
+            if($this->Helper->Core->isInstalled('contacts')){
+                $message['data']['dependencies']['contacts'] = $this->Model->Contacts->fetchAll([
+                    ["key" => "targetTable", "operator" => "=", "value" => $this->basename],
+                    ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['id']],
+                    ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                ]);
+                if($this->Helper->Core->isInstalled('clients') && !is_null($message['data']['record']['client']['id'])){
+                    $message['data']['dependencies']['contacts'] = array_merge($message['data']['dependencies']['contacts'], $this->Model->Contacts->fetchAll([
+                        ["key" => "targetTable", "operator" => "=", "value" => "clients"],
+                        ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['client']['id']],
+                        ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                    ]));
+                }
+            }
 
-            // // Check if the Documents is accessible
-            // if($this->Helper->Core->isInstalled('documents')){
-            //     $message['data']['dependencies']['documents'] = $this->Model->Documents->fetchAll([
-            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
-            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
-            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
-            //     ]);
-            // }
+            // Check if the Documents is accessible
+            if($this->Helper->Core->isInstalled('documents')){
+                $message['data']['dependencies']['documents'] = $this->Model->Documents->fetchAll([
+                    ["key" => "targetTable", "operator" => "=", "value" => $this->basename],
+                    ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['id']],
+                    ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                ]);
+            }
 
-            // // Check if the Events is accessible
-            // if($this->Helper->Core->isInstalled('events')){
-            //     $message['data']['dependencies']['events'] = $this->Model->Events->fetchAll([
-            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
-            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
-            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
-            //     ]);
-            // }
+            // Check if the Events is accessible
+            if($this->Helper->Core->isInstalled('event')){
+                $message['data']['dependencies']['event'] = $this->Model->Event->fetchAll([
+                    ["key" => "targetTable", "operator" => "=", "value" => $this->basename],
+                    ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['id']],
+                    ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                ]);
+            }
 
-            // // Check if the Files is accessible
-            // if($this->Helper->Core->isInstalled('files')){
-            //     $message['data']['dependencies']['files'] = $this->Model->Files->fetchAll([
-            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
-            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
-            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
-            //     ]);
-            // }
+            // Check if the Files is accessible
+            if($this->Helper->Core->isInstalled('files')){
+                $message['data']['dependencies']['files'] = $this->Model->Files->fetchAll([
+                    ["key" => "targetTable", "operator" => "=", "value" => $this->basename],
+                    ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['id']],
+                    ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                ]);
+            }
 
-            // // Check if the Followups is accessible
-            // if($this->Helper->Core->isInstalled('followups')){
-            //     $message['data']['dependencies']['followups'] = $this->Model->Followups->fetchAll([
-            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
-            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
-            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
-            //     ]);
-            // }
+            // Check if the Followups is accessible
+            if($this->Helper->Core->isInstalled('followups')){
+                $message['data']['dependencies']['followups'] = $this->Model->Followups->fetchAll([
+                    ["key" => "targetTable", "operator" => "=", "value" => $this->basename],
+                    ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['id']],
+                    ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                ]);
+            }
 
-            // // Check if the Notes is accessible
-            // if($this->Helper->Core->isInstalled('notes')){
-            //     $message['data']['dependencies']['notes'] = $this->Model->Notes->fetchAll([
-            //         ["key" => "targetTable", "operator" => "=", "value" => "leads"],
-            //         ["key" => "targetId", "operator" => "=", "value" => $lead['id']],
-            //         ["key" => "isArchived", "operator" => "<>", "value" => 1],
-            //     ]);
-            // }
+            // Check if the Notes is accessible
+            if($this->Helper->Core->isInstalled('notes')){
+                $message['data']['dependencies']['notes'] = $this->Model->Notes->fetchAll([
+                    ["key" => "targetTable", "operator" => "=", "value" => $this->basename],
+                    ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['id']],
+                    ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                ]);
+            }
 
             // Check if the Services is accessible
             if($this->Helper->Core->isInstalled('services')){
-                if(!is_null($lead['client']['id'])){
-                    $message['data']['dependencies']['services'] = $this->Model->Services->fetchAll([
+                $message['data']['dependencies']['services'] = $this->Model->Services->fetchAll([
+                    ["key" => "targetTable", "operator" => "=", "value" => $this->basename],
+                    ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['id']],
+                    ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                ]);
+                if($this->Helper->Core->isInstalled('clients') && !is_null($message['data']['record']['client']['id'])){
+                    $message['data']['dependencies']['services'] = array_merge($message['data']['dependencies']['services'], $this->Model->Services->fetchAll([
                         ["key" => "targetTable", "operator" => "=", "value" => "clients"],
-                        ["key" => "targetId", "operator" => "=", "value" => $lead['client']['id']],
+                        ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['client']['id']],
                         ["key" => "isArchived", "operator" => "<>", "value" => 1],
-                    ]);
+                    ]));
                 }
             }
         }
+
+        // Return the message
         return $message;
     }
 
     /**
-     * Create a Lead
+     * Create a record
      */
     public function createAction(): array
     {
-        // Import Global Variables
-        global $CSRF;
+        // Call the parent constructor
+        $message = parent::createAction();
 
-        // Set the default message
-        $message = ["status" => 200, "message" => "OK", "data" => []];
-
-        // Check the request method
-        if($this->Request->getMethod() == "POST"){
-            $message["data"]["CSRF"] = [
-                "token" => $CSRF->token(),
-                "key" => $CSRF->key()
-            ];
-        }
-
-        // Check if the task is accessible
+        // Check if the record is accessible
         if($message['status'] == 200){
 
-            // Check the request method
-            if($this->Request->getMethod() == "POST"){
+            // Retrieve the parameters
+            $parameters = $message['data']['parameters'];
 
-                // Retrieve the parameters
-                $parameters = $this->Request->getParams('REQUEST');
+            // Initialize the fields array
+            $fields = [];
 
-                // Set Required Fields
-                $required = ['name','email','phone','locale'];
+            // Check if the Event Plugin is accessible
+            if($this->Helper->Core->isInstalled('event')){
 
-                // Set Optional Fields
-                $optional = ['tollfree','mobile','fax','tags','dba','industries','businessNumber','taxExtension','importerExtension','website','address','city','country','state','zipcode'];
+                // Initialize the Events
+                $message['data']['event'] = [];
 
-                // Sanitize the parameters
-                if(!array_key_exists('locale',$parameters) || empty($parameters['locale'] || is_null($parameters['locale']))){
-                    $parameters['locale'] = $this->Locale->current();
-                }
-                foreach($parameters as $key => $value){
-                    if(empty($value)){
-                        unset($parameters[$key]);
-                    } else {
-                        if(!in_array($key,['country','state','locale','email','website','zipcode','contacts','name','dba'])){
-                            if(in_array($key,['tags','industries']) && !is_array($value)){
-                                $value = json_decode($value, true);
-                                $parameters[$key] = $value;
-                            }
-                            if(!is_array($value)){
-                                $parameters[$key] = ucwords(strtolower($value));
-                            } else {
-                                foreach($value as $k => $v){
-                                    $parameters[$key][$k] = ucwords(strtolower($v));
-                                }
-                            }
-                        }
-                    }
-                }
+                // Setup a new event
+                $event = [
+                    'category' => 'Lead',
+                    'message' => 'New Lead Created for <vcard>'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                    'icon' => 'circle',
+                    'color' => 'secondary',
+                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                    'targetTable' => 'leads',
+                    'targetId' => $message['data']['record']['id'],
+                ];
 
-                // Check if all required fields are set
-                if(count(array_intersect_key(array_flip($required), $parameters)) == count($required)){
+                // Create the event
+                $message['data']['event'][] = $this->Model->Event->create($event);
+            }
 
-                    // Initialize the Events
-                    $message['data']['events'] = [];
+            // Check if the vCards Plugin is accessible
+            if($this->Helper->Core->isInstalled('vcards')){
 
-                    // Retrieve the lead process
-                    $process = $this->Model->Process->get('Lead');
-                    $parameters['process'] = $process['process'];
+                // Initialize the record
+                $record = $parameters;
 
-                    // Retrieve the user's username and organization
-                    $parameters['owner'] = $this->Auth->user()->username;
-                    $parameters['organization'] = $this->Auth->user()->organization()->id;
+                // Set the vCard category
+                $record['category'] = 'Lead';
 
-                    // Create a Lead
-                    $lead = [
-                        'owner' => $parameters['owner'],
-                        'organization' => $parameters['organization'],
-                    ];
-                    $leadId = $this->Model->Leads->create($lead);
+                // Create the vCard
+                $fields['vcard'] = $this->Model->Vcards->create($record);
 
-                    // Create a vCard
-                    $vCard = [
-                        'category' => 'Lead',
-                        'name' => $parameters['name'],
-                        'address' => $parameters['address'] ?? null,
-                        'city' => $parameters['city'] ?? null,
-                        'country' => $parameters['country'],
-                        'state' => $parameters['state'],
-                        'zipcode' => $parameters['zipcode'] ?? null,
-                        'email' => $parameters['email'],
-                        'phone' => $parameters['phone'],
-                        'website' => $parameters['website'] ?? null,
-                        'locale' => $parameters['locale'],
-                        'owner' => $parameters['owner'],
-                        'organization' => $parameters['organization'],
-                    ];
-                    foreach($optional as $key){
-                        if(isset($parameters[$key]) && !empty($parameters[$key])){
-                            $vCard[$key] = $parameters[$key];
-                        } elseif(in_array($key,['taxExtension','importerExtension'])) {
-                            $vCard[$key] = "0001";
-                        }
-                    }
-                    $vCardId = $this->Model->Vcards->create($vCard);
+                // Check if the Event Plugin is accessible
+                if($this->Helper->Core->isInstalled('event')){
 
-                    // Create a Task
-                    $task = [
-                        'label' => 'Progress on <vcard>'.$vCardId.':'.$vCard['name'].'</vcard>',
-                        'category' => 'Lead',
-                        'progress' => 0,
-                        'scale' => count($process['process']),
-                        'color' => 'primary',
-                        'link' => '/plugin/leads/details?id='.$leadId."&name=".urlencode($vCard['name']),
-                        'owner' => $parameters['owner'],
-                        'process' => $parameters['process'],
-                        'isActive' => 0,
+                    // Setup a new event
+                    $event = [
+                        'category' => 'vCard',
+                        'message' => 'New vCard Created for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                        'icon' => 'circle',
+                        'color' => 'secondary',
+                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
                         'targetTable' => 'leads',
-                        'targetId' => $leadId,
+                        'targetId' => $message['data']['record']['id'],
                     ];
-                    $taskId = $this->Model->Tasks->create($task);
 
-                    // Update the Lead
-                    $affectedRows = $this->Model->Leads->update($leadId, ['vcard' => $vCardId, 'task' => $taskId]);
-
-                    // Create the related events
-                    $message['data']['events'][] = $this->Model->Event->create($parameters['owner'], 'tasks', $taskId, 'Task', 'New Task Created for <vcard>'.$vCardId.':'.$vCard['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>', '/plugin/tasks/index?id='.$taskId);
-                    $message['data']['events'][] = $this->Model->Event->create($parameters['owner'], 'vcards', $vCardId, 'vCard', 'New vCard Created for <vcard>'.$vCardId.':'.$vCard['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>', '/plugin/vcards/details?id='.$vCardId);
-                    $message['data']['events'][] = $this->Model->Event->create($parameters['owner'], 'leads', $leadId, 'Lead', 'New Lead Created about <vcard>'.$vCardId.':'.$vCard['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>', '/plugin/leads/details?id='.$leadId);
-
-                    // Count the affected rows
-                    $count = $affectedRows + ($vCardId > 0 ? 1 : 0) + ($taskId > 0 ? 1 : 0) + ($leadId > 0 ? 1 : 0);
-
-                    // Check if tags is set
-                    if(isset($parameters['tags'])){
-                        foreach($parameters['tags'] as $key => $tag){
-                            $this->Model->Tags->create($tag);
-                        }
-                    }
-
-                    // Check if industries is set
-                    if(isset($parameters['industries'])){
-                        foreach($parameters['industries'] as $key => $industry){
-                            $this->Model->Industries->create($industry);
-                        }
-                    }
-
-                    // Check if the lead was created
-                    if($count == 4){
-
-                        // Retrieve the final lead
-                        $message['data']['record'] = $this->Model->Leads->get($leadId);
-                    } else {
-                        $message['status'] = 500;
-                        $message['message'] = "Internal Server Error";
-                        $message['data']['error'] = "An error occurred while creating the lead.";
-                    }
-                } else {
-                    $message['status'] = 400;
-                    $message['message'] = "Bad Request";
-                    $message['data']['error'] = "Some required fields are missing [";
-                    foreach($required as $key){
-                        if(!array_key_exists($key, $parameters)){
-                            $message['data']['error'] .= $key.", ";
-                        }
-                    }
-                    $message['data']['error'] = rtrim($message['data']['error'], ", ");
-                    $message['data']['error'] .= "]";
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
                 }
-            } else {
-                $message = ["status" => 405, "message" => "Method Not Allowed", "data" => "The method is not allowed for the requested URL."];
+            }
+
+            // Check if the Tasks Plugin is accessible
+            if($this->Helper->Core->isInstalled('tasks')){
+
+                // Initialize the record
+                $record = [];
+
+                // Retrieve the lead process
+                $process = $this->Model->Process->fetchByTable('leads');
+                $record['process'] = $process['process'];
+
+                // Complete the task record
+                $record['label'] = 'Progress on <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard>';
+                $record['category'] = 'Lead';
+                $record['progress'] = 0;
+                $record['scale'] = count($record['process']);
+                $record['color'] = 'primary';
+                $record['link'] = '/plugin/leads/details?id='.$fields['vcard'].'&name='.urlencode($parameters['name']);
+                $record['isActive'] = 0;
+                $record['targetTable'] = 'leads';
+                $record['targetId'] = $message['data']['record']['id'];
+
+                // Create the task
+                $fields['task'] = $this->Model->Tasks->create($record);
+
+                // Check if the Event Plugin is accessible
+                if($this->Helper->Core->isInstalled('event')){
+
+                    // Setup a new event
+                    $event = [
+                        'category' => 'Task',
+                        'message' => 'New Task Created for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                        'icon' => 'circle',
+                        'color' => 'secondary',
+                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                        'targetTable' => 'leads',
+                        'targetId' => $message['data']['record']['id'],
+                    ];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+
+                    // Setup a new event for the task
+                    $event['link'] = '/plugin/tasks/index?id='.$fields['task'];
+                    $event['targetTable'] = 'tasks';
+                    $event['targetId'] = $fields['task'];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+                }
+            }
+
+            // Check if tags is set
+            if($this->Helper->Core->isInstalled('tags') && array_key_exists('tags', $parameters) && !empty($parameters['tags'])){
+
+                // Loop through the tags
+                foreach($parameters['tags'] ?? [] as $key => $tag){
+
+                    // Check if the tag is not empty
+                    if(!empty($tag)){
+
+                        // Create the tag
+                        $this->Model->Tags->create(['name' => $tag]);
+                    }
+                }
+            }
+
+            // Check if industries is set
+            if($this->Helper->Core->isInstalled('industries') && array_key_exists('industries', $parameters) && !empty($parameters['industries'])){
+
+                // Loop through the industries
+                foreach($parameters['industries'] ?? [] as $key => $industry){
+
+                    // Check if the industry is not empty
+                    if(!empty($industry)){
+
+                        // Create the industry
+                        $this->Model->Industries->create(['name' => $industry]);
+                    }
+                }
+            }
+
+            // Check if $fields is empty
+            if(!empty($fields)){
+                $affectedRows = $this->Model->{$this->name}->update($message['data']['record']['id'], $fields);
+
+                // Check if we send out the notification
+                if($affectedRows){
+
+                    // Retrieve the updated record
+                    $message['data']['record'] = $this->Model->{$this->name}->fetch($message['data']['record']['id']);
+                }
             }
         }
 
+        // Return the message
         return $message;
     }
 
     /**
-     * Archive a Lead
+     * Update a record
+     */
+    public function updateAction(): array
+    {
+        // Call the parent constructor
+        $message = parent::updateAction();
+
+        // Check if the record is accessible
+        if($message['status'] == 200){
+
+            // Check if the Event Plugin is accessible
+            if($this->Helper->Core->isInstalled('event')){
+
+                // Initialize the Events
+                $message['data']['event'] = [];
+
+                // Setup a new event
+                $event = [
+                    'category' => 'Lead',
+                    'message' => 'Lead Updated for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                    'icon' => 'circle',
+                    'color' => 'secondary',
+                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                    'targetTable' => 'leads',
+                    'targetId' => $message['data']['record']['id'],
+                ];
+
+                // Create the event
+                $message['data']['event'][] = $this->Model->Event->create($event);
+            }
+        }
+
+        // Return the message
+        return $message;
+    }
+
+    /**
+     * Delete a record
+     */
+    public function deleteAction(): array
+    {
+        // Call the parent constructor
+        $message = parent::deleteAction();
+
+        // Check if the record is accessible
+        if($message['status'] == 200){
+
+            // Check if the Event Plugin is accessible
+            if($this->Helper->Core->isInstalled('event')){
+
+                // Initialize the Events
+                $message['data']['event'] = [];
+
+                // Setup a new event
+                $event = [
+                    'category' => 'Lead',
+                    'message' => 'Lead Deleted for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                    'icon' => 'circle',
+                    'color' => 'secondary',
+                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                    'targetTable' => 'leads',
+                    'targetId' => $message['data']['record']['id'],
+                ];
+
+                // Create the event
+                $message['data']['event'][] = $this->Model->Event->create($event);
+            }
+
+            // Check if the Clients Plugin is accessible
+            if($this->Helper->Core->isInstalled('clients')){
+
+                // Delete the client
+                $affectedRows = $this->Model->Clients->delete($message['data']['record']['client']['id']);
+
+                // Check if the Event Plugin is accessible
+                if($affectedRows && $this->Helper->Core->isInstalled('event')){
+
+                    // Setup a new event
+                    $event = [
+                        'category' => 'Client',
+                        'message' => 'Client Deleted for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                        'icon' => 'circle',
+                        'color' => 'secondary',
+                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                        'targetTable' => 'leads',
+                        'targetId' => $message['data']['record']['id'],
+                    ];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+
+                    // Setup a new event for the client
+                    $event['link'] = '/plugin/clients/index?id='.$message['data']['record']['client']['id'];
+                    $event['targetTable'] = 'clients';
+                    $event['targetId'] = $message['data']['record']['client']['id'];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+                }
+
+                // Check if the Tasks Plugin is accessible
+                if($this->Helper->Core->isInstalled('tasks')){
+
+                    // Delete the task
+                    $affectedRows = $this->Model->Tasks->delete($message['data']['record']['client']['task']);
+
+                    // Check if the Event Plugin is accessible
+                    if($affectedRows && $this->Helper->Core->isInstalled('event')){
+
+                        // Setup a new event
+                        $event = [
+                            'category' => 'Task',
+                            'message' => 'Task Deleted for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                            'icon' => 'circle',
+                            'color' => 'secondary',
+                            'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                            'targetTable' => 'leads',
+                            'targetId' => $message['data']['record']['id'],
+                        ];
+
+                        // Create the event
+                        $message['data']['event'][] = $this->Model->Event->create($event);
+
+                        // Setup a new event for the task
+                        $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['client']['task'];
+                        $event['targetTable'] = 'tasks';
+                        $event['targetId'] = $message['data']['record']['client']['task'];
+
+                        // Create the event
+                        $message['data']['event'][] = $this->Model->Event->create($event);
+                    }
+                }
+            }
+
+            // Check if the vCards Plugin is accessible
+            if($this->Helper->Core->isInstalled('vcards')){
+
+                // Delete the vCard
+                $affectedRows = $this->Model->Vcards->delete($message['data']['record']['vcard']['id']);
+
+                // Check if the Event Plugin is accessible
+                if($affectedRows && $this->Helper->Core->isInstalled('event')){
+
+                    // Setup a new event
+                    $event = [
+                        'category' => 'vCard',
+                        'message' => 'vCard Deleted for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                        'icon' => 'circle',
+                        'color' => 'secondary',
+                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                        'targetTable' => 'leads',
+                        'targetId' => $message['data']['record']['id'],
+                    ];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+                }
+            }
+
+            // Check if the Tasks Plugin is accessible
+            if($this->Helper->Core->isInstalled('tasks')){
+
+                // Delete the task
+                $affectedRows = $this->Model->Tasks->delete($message['data']['record']['task']['id']);
+
+                // Check if the Event Plugin is accessible
+                if($affectedRows && $this->Helper->Core->isInstalled('event')){
+
+                    // Setup a new event
+                    $event = [
+                        'category' => 'Task',
+                        'message' => 'Task Deleted for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                        'icon' => 'circle',
+                        'color' => 'secondary',
+                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                        'targetTable' => 'leads',
+                        'targetId' => $message['data']['record']['id'],
+                    ];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+
+                    // Setup a new event for the task
+                    $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['task']['id'];
+                    $event['targetTable'] = 'tasks';
+                    $event['targetId'] = $message['data']['record']['task']['id'];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+                }
+            }
+        }
+
+        // Return the message
+        return $message;
+    }
+
+    /**
+     * Archive a record
      */
     public function archiveAction(): array
     {
-        // Set the default message
-        $message = ["status" => 200, "message" => "OK", "data" => []];
+        // Call the parent constructor
+        $message = parent::archiveAction();
 
-        // Retrieve the Lead
-        $lead = $this->Model->Leads->get(intval($this->Request->getParams('GET','id')));
-
-        // Check if the Lead is accessible
-        if(empty($lead)){
-            $message = ["status" => 404, "message" => "Not Found", "data" => "Could not find the requested lead."];
-        } else {
-            if($lead['organization']['id'] != $this->Auth->user()->organization()->id){
-                $message = ["status" => 403, "message" => "Forbidden", "data" => "You are not allowed to access this lead."];
-            }
-            if(!$this->Auth->isAuthorized("AccountManager", 4)){
-                $message = ["status" => 403, "message" => "Forbidden", "data" => "You are not allowed to archive this lead."];
-            }
-        }
-
-        // Check if the Note is accessible
+        // Check if the record is accessible
         if($message['status'] == 200){
 
-            // Check the request method
-            if($this->Request->getMethod() == "GET"){
+            // Check if the Event Plugin is accessible
+            if($this->Helper->Core->isInstalled('event')){
 
-                // Update the Lead
-                $this->Model->Leads->update($lead['id'], ["isArchived" => 1]);
+                // Initialize the Events
+                $message['data']['event'] = [];
 
-                // Update the Task
-                $this->Model->Tasks->archive($lead['task']['id']);
+                // Setup a new event
+                $event = [
+                    'category' => 'Lead',
+                    'message' => 'Lead Archived for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                    'icon' => 'circle',
+                    'color' => 'secondary',
+                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                    'targetTable' => 'leads',
+                    'targetId' => $message['data']['record']['id'],
+                ];
 
-                // Retrieve the Updated Lead
-                $message["data"]["record"] = $this->Model->Leads->get($lead['id']);
-            } else {
-                $message = ["status" => 400, "message" => "Bad Request", "data" => "Invalid Request Method"];
+                // Create the event
+                $message['data']['event'][] = $this->Model->Event->create($event);
+            }
+
+            // Check if the Clients Plugin is accessible
+            if($this->Helper->Core->isInstalled('clients')){
+
+                // Check if the client is not null
+                if(!is_null($message['data']['record']['client']['id'])){
+
+                    // Archive the client
+                    $affectedRows = $this->Model->Clients->archive($message['data']['record']['client']['id']);
+
+                    // Check if the Event Plugin is accessible
+                    if($affectedRows && $this->Helper->Core->isInstalled('event')){
+
+                        // Setup a new event
+                        $event = [
+                            'category' => 'Client',
+                            'message' => 'Client Archived for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                            'icon' => 'circle',
+                            'color' => 'secondary',
+                            'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                            'targetTable' => 'leads',
+                            'targetId' => $message['data']['record']['id'],
+                        ];
+
+                        // Create the event
+                        $message['data']['event'][] = $this->Model->Event->create($event);
+
+                        // Setup a new event for the client
+                        $event['link'] = '/plugin/clients/index?id='.$message['data']['record']['client']['id'];
+                        $event['targetTable'] = 'clients';
+                        $event['targetId'] = $message['data']['record']['client']['id'];
+
+                        // Create the event
+                        $message['data']['event'][] = $this->Model->Event->create($event);
+                    }
+
+                    // Check if the Tasks Plugin is accessible
+                    if($this->Helper->Core->isInstalled('tasks')){
+
+                        // Archive the task
+                        $affectedRows = $this->Model->Tasks->archive($message['data']['record']['client']['task']);
+
+                        // Check if the Event Plugin is accessible
+                        if($affectedRows && $this->Helper->Core->isInstalled('event')){
+
+                            // Setup a new event
+                            $event = [
+                                'category' => 'Task',
+                                'message' => 'Task Archived for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                                'icon' => 'circle',
+                                'color' => 'secondary',
+                                'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                                'targetTable' => 'leads',
+                                'targetId' => $message['data']['record']['id'],
+                            ];
+
+                            // Create the event
+                            $message['data']['event'][] = $this->Model->Event->create($event);
+
+                            // Setup a new event for the task
+                            $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['client']['task'];
+                            $event['targetTable'] = 'tasks';
+                            $event['targetId'] = $message['data']['record']['client']['task'];
+
+                            // Create the event
+                            $message['data']['event'][] = $this->Model->Event->create($event);
+                        }
+                    }
+                }
+            }
+
+            // Check if the Tasks Plugin is accessible
+            if($this->Helper->Core->isInstalled('tasks')){
+
+                // Update the record
+                $this->Model->Tasks->archive($message['data']['record']['task']['id']);
+
+                // Check if the Event Plugin is accessible
+                if($this->Helper->Core->isInstalled('event')){
+
+                    // Setup a new event
+                    $event = [
+                        'category' => 'Task',
+                        'message' => 'Task Archived for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                        'icon' => 'circle',
+                        'color' => 'secondary',
+                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                        'targetTable' => 'leads',
+                        'targetId' => $message['data']['record']['id'],
+                    ];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+
+                    // Setup a new event for the task
+                    $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['task']['id'];
+                    $event['targetTable'] = 'tasks';
+                    $event['targetId'] = $message['data']['record']['task']['id'];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+                }
             }
         }
 
+        // Return the message
         return $message;
     }
 
     /**
-     * Recover a Lead
+     * Recover a record
      */
     public function recoverAction(): array
     {
-        // Set the default message
-        $message = ["status" => 200, "message" => "OK", "data" => []];
+        // Call the parent constructor
+        $message = parent::recoverAction();
 
-        // Retrieve the Lead
-        $lead = $this->Model->Leads->get(intval($this->Request->getParams('GET','id')));
-
-        // Check if the Lead is accessible
-        if(empty($lead)){
-            $message = ["status" => 404, "message" => "Not Found", "data" => "Could not find the requested lead."];
-        } else {
-            if($lead['organization']['id'] != $this->Auth->user()->organization()->id){
-                $message = ["status" => 403, "message" => "Forbidden", "data" => "You are not allowed to access this lead."];
-            }
-            if(!$this->Auth->isAuthorized("AccountManager", 4)){
-                $message = ["status" => 403, "message" => "Forbidden", "data" => "You are not allowed to access this lead."];
-            }
-        }
-
-        // Check if the Note is accessible
+        // Check if the record is accessible
         if($message['status'] == 200){
 
-            // Check the request method
-            if($this->Request->getMethod() == "GET"){
+            // Check if the Event Plugin is accessible
+            if($this->Helper->Core->isInstalled('event')){
 
-                // Update the Lead
-                $affectedRows = $this->Model->Leads->update($lead['id'], ["isArchived" => 0]);
+                // Initialize the Events
+                $message['data']['event'] = [];
 
-                // Retrieve the Updated Lead
-                $message["data"]["record"] = $this->Model->Leads->get($lead['id']);
-            } else {
-                $message = ["status" => 400, "message" => "Bad Request", "data" => "Invalid Request Method"];
+                // Setup a new event
+                $event = [
+                    'category' => 'Lead',
+                    'message' => 'Lead Recovered for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                    'icon' => 'circle',
+                    'color' => 'secondary',
+                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                    'targetTable' => 'leads',
+                    'targetId' => $message['data']['record']['id'],
+                ];
+
+                // Create the event
+                $message['data']['event'][] = $this->Model->Event->create($event);
+            }
+
+            // Check if the Clients Plugin is accessible
+            if($this->Helper->Core->isInstalled('clients')){
+
+                // Recover the client
+                $affectedRows = $this->Model->Clients->recover($message['data']['record']['client']['id']);
+
+                // Check if the Event Plugin is accessible
+                if($affectedRows && $this->Helper->Core->isInstalled('event')){
+
+                    // Setup a new event
+                    $event = [
+                        'category' => 'Client',
+                        'message' => 'Client Recovered for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                        'icon' => 'circle',
+                        'color' => 'secondary',
+                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                        'targetTable' => 'leads',
+                        'targetId' => $message['data']['record']['id'],
+                    ];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+
+                    // Setup a new event for the client
+                    $event['link'] = '/plugin/clients/index?id='.$message['data']['record']['client']['id'];
+                    $event['targetTable'] = 'clients';
+                    $event['targetId'] = $message['data']['record']['client']['id'];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+                }
+
+                // Check if the Tasks Plugin is accessible
+                if($this->Helper->Core->isInstalled('tasks')){
+
+                    // Recover the task
+                    $affectedRows = $this->Model->Tasks->recover($message['data']['record']['client']['task']);
+
+                    // Check if the Event Plugin is accessible
+                    if($affectedRows && $this->Helper->Core->isInstalled('event')){
+
+                        // Setup a new event
+                        $event = [
+                            'category' => 'Task',
+                            'message' => 'Task Recovered for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                            'icon' => 'circle',
+                            'color' => 'secondary',
+                            'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                            'targetTable' => 'leads',
+                            'targetId' => $message['data']['record']['id'],
+                        ];
+
+                        // Create the event
+                        $message['data']['event'][] = $this->Model->Event->create($event);
+
+                        // Setup a new event for the task
+                        $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['client']['task'];
+                        $event['targetTable'] = 'tasks';
+                        $event['targetId'] = $message['data']['record']['client']['task'];
+
+                        // Create the event
+                        $message['data']['event'][] = $this->Model->Event->create($event);
+                    }
+                }
+            }
+
+            // Check if the Tasks Plugin is accessible
+            if($this->Helper->Core->isInstalled('tasks')){
+
+                // Update the record
+                $this->Model->Tasks->recover($message['data']['record']['task']['id']);
+
+                // Check if the Event Plugin is accessible
+                if($this->Helper->Core->isInstalled('event')){
+
+                    // Setup a new event
+                    $event = [
+                        'category' => 'Task',
+                        'message' => 'Task Recovered for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                        'icon' => 'circle',
+                        'color' => 'secondary',
+                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                        'targetTable' => 'leads',
+                        'targetId' => $message['data']['record']['id'],
+                    ];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+
+                    // Setup a new event for the task
+                    $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['task']['id'];
+                    $event['targetTable'] = 'tasks';
+                    $event['targetId'] = $message['data']['record']['task']['id'];
+
+                    // Create the event
+                    $message['data']['event'][] = $this->Model->Event->create($event);
+                }
             }
         }
 
+        // Return the message
         return $message;
     }
 }
