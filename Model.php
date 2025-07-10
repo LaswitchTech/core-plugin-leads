@@ -115,9 +115,10 @@ class LeadsModel extends BaseModel {
             ->join('organization', 'organizations', 'id')
             ->filter()
             ->where('id', 9999, '<>')
+            ->where('organization', $this->Auth->user()->organization()->id)
+            ->where('isArchived', 1, '<>')
             ->filter()
             ->where($this->primary, $id)
-            ->where('organization', $this->Auth->user()->organization()->id)
             ->limit(1);
 
         // Retrieve the record
