@@ -86,6 +86,13 @@ class LeadsEndpoint extends BaseEndpoint {
                     ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['id']],
                     ["key" => "isArchived", "operator" => "<>", "value" => 1],
                 ]);
+                if($this->Helper->Core->isInstalled('clients') && !is_null($message['data']['record']['client']['id'])){
+                    $message['data']['dependencies']['documents'] = array_merge($message['data']['dependencies']['documents'], $this->Model->Documents->fetchAll([
+                        ["key" => "targetTable", "operator" => "=", "value" => "clients"],
+                        ["key" => "targetId", "operator" => "=", "value" => $message['data']['record']['client']['id']],
+                        ["key" => "isArchived", "operator" => "<>", "value" => 1],
+                    ]));
+                }
             }
 
             // Check if the Events is accessible
