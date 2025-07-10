@@ -18,6 +18,36 @@ class LeadsModel extends BaseModel {
     }
 
     /**
+     * Process a record
+     *
+     * @param array $record
+     * @return array
+     */
+    protected function process(array $record): array
+    {
+        // Call the parent constructor
+        $record = parent::process($record);
+
+        // Check if the record has a task
+        if(array_key_exists('task', $record) && !empty($record['task'])){
+
+            // Process the task
+            $records[$key]['task']['process'] = json_decode($record['task']['process'] ?? "[]", true);
+        }
+
+        // Check if the record has a vcard
+        if(array_key_exists('vcard', $record) && !empty($record['vcard'])){
+
+            // Process the vcard
+            $records[$key]['vcard']['tags'] = json_decode($record['vcard']['tags'] ?? "[]", true);
+            $records[$key]['vcard']['industries'] = json_decode($record['vcard']['industries'] ?? "[]", true);
+        }
+
+        // Return the processed record
+        return $record;
+    }
+
+    /**
      * Retrieve multiple records
      *
      * @param array $conditions
@@ -72,21 +102,6 @@ class LeadsModel extends BaseModel {
 
             // Overwrite the record with the processed one
             $records[$key] = $this->process($record);
-
-            // Check if the record has a task
-            if(array_key_exists('task', $record) && !empty($record['task'])){
-
-                // Process the task
-                $records[$key]['task']['process'] = json_decode($record['task']['process'] ?? "[]", true);
-            }
-
-            // Check if the record has a vcard
-            if(array_key_exists('vcard', $record) && !empty($record['vcard'])){
-
-                // Process the vcard
-                $records[$key]['vcard']['tags'] = json_decode($record['vcard']['tags'] ?? "[]", true);
-                $records[$key]['vcard']['industries'] = json_decode($record['vcard']['industries'] ?? "[]", true);
-            }
         }
 
         // Return the Results
@@ -129,21 +144,6 @@ class LeadsModel extends BaseModel {
 
             // Overwrite the record with the processed one
             $records[$key] = $this->process($record);
-
-            // Check if the record has a task
-            if(array_key_exists('task', $record) && !empty($record['task'])){
-
-                // Process the task
-                $records[$key]['task']['process'] = json_decode($record['task']['process'] ?? "[]", true);
-            }
-
-            // Check if the record has a vcard
-            if(array_key_exists('vcard', $record) && !empty($record['vcard'])){
-
-                // Process the vcard
-                $records[$key]['vcard']['tags'] = json_decode($record['vcard']['tags'] ?? "[]", true);
-                $records[$key]['vcard']['industries'] = json_decode($record['vcard']['industries'] ?? "[]", true);
-            }
         }
 
         // Return the record or an empty array if not found
