@@ -22,10 +22,10 @@
             },
             success: function(response) {
 
-                // Configure Storage
-                builder.Storage.setKey('leads:assigned');
-                builder.Storage.set(response);
-                console.log(builder.Storage.get())
+                // // Configure Storage
+                // builder.Storage.setKey('leads:assigned');
+                // builder.Storage.set(response);
+                // console.log(builder.Storage.get())
 
                 // Set Actions
                 var actions = {
