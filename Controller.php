@@ -38,7 +38,7 @@ class LeadsController extends Controller {
     public function logoAction(): array
     {
         // Retrieve the parameters
-        $id = $this->Request->getParams('GET', 'id') ?? null;
+        $id = intval($this->Request->getParams('GET', 'id') ?? null);
         $size = $this->Request->getParams('GET', 'size') ?? 128;
 
         // Retrieve the lead
