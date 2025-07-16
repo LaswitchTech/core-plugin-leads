@@ -283,10 +283,23 @@
                             },
                         },
                         async function(tabs,card){
-                            card._component.body.removeClass('card-body');
+
+                            // Retrieve the record
                             let record = await builder.Storage.get('record');
+
+                            // Set the table
+                            let table = 'leads'
+
+                            // Styling
+                            card._component.body.removeClass('card-body');
+
+                            // Notes
                             <?php if($this->Helper->Core->isInstalled('notes')): ?>
+
+                                // Retrieve the notes
                                 let notes = await builder.Storage.get('dependencies:notes');
+
+                                // Add the Notes tab
                                 tabs.add(
                                     'notes',
                                     {
@@ -295,12 +308,18 @@
                                     },
                                     function(tab,nav){
                                         card.notes = tab;
-                                        NotesFeed(notes ?? [], tab, 'leads', record.id);
+                                        NotesFeed(notes ?? [], tab, table, record.id);
                                     },
                                 );
                             <?php endif; ?>
+
+                            // Contacts
                             <?php if($this->Helper->Core->isInstalled('contacts')): ?>
+
+                                // Retrieve the contacts
                                 let contacts = await builder.Storage.get('dependencies:contacts');
+
+                                // Add the Contacts tab
                                 tabs.add(
                                     'contacts',
                                     {
@@ -318,14 +337,44 @@
                                             "zipcode": record.vcard.zipcode,
                                             "locale": record.vcard.locale,
                                             "phone": record.vcard.phone,
-                                            "targetTable": "leads",
+                                            "targetTable": table,
                                             "targetId": record.id,
                                         });
                                     },
                                 );
                             <?php endif; ?>
+
+                            // Files
+                            <?php if($this->Helper->Core->isInstalled('files')): ?>
+
+                                // Retrieve the files
+                                let files = await builder.Storage.get('dependencies:files');
+
+                                // Add the Files tab
+                                tabs.add(
+                                    'files',
+                                    {
+                                        icon: "file-earmark",
+                                        label: builder.Locale.get("Files"),
+                                    },
+                                    function(tab,nav){
+                                        card.files = tab;
+                                        FilesFeed(files ?? [], tab, {
+                                            targetTable: table,
+                                            targetId: record.id,
+                                            isPublic: 1,
+                                        });
+                                    },
+                                );
+                            <?php endif; ?>
+
+                            // Followups
                             <?php if($this->Helper->Core->isInstalled('followups')): ?>
+
+                                // Retrieve the followups
                                 let followups = await builder.Storage.get('dependencies:followups');
+
+                                // Add the Calls tab
                                 tabs.add(
                                     'calls',
                                     {
@@ -341,6 +390,8 @@
                                         });
                                     },
                                 );
+
+                                // Add the Callbacks tab
                                 tabs.add(
                                     'callbacks',
                                     {
@@ -356,6 +407,8 @@
                                         });
                                     },
                                 );
+
+                                // Add the Appointments tab
                                 tabs.add(
                                     'appointments',
                                     {
@@ -372,8 +425,14 @@
                                     },
                                 );
                             <?php endif; ?>
+
+                            // Services
                             <?php if($this->Helper->Core->isInstalled('services')): ?>
+
+                                // Retrieve the services
                                 let services = await builder.Storage.get('dependencies:services');
+
+                                // Add the Services tab
                                 tabs.add(
                                     'services',
                                     {
@@ -382,7 +441,7 @@
                                     },
                                     function(tab,nav){
                                         card.services = tab;
-                                        ServicesFeed(builder.Storage.getKey(), tab, {
+                                        ServicesFeed(services, tab, {
                                             targetTable: "leads",
                                             targetId: record.id,
                                         }, function(feed, component){
@@ -392,26 +451,14 @@
                                     },
                                 );
                             <?php endif; ?>
-                            <?php if($this->Helper->Core->isInstalled('files')): ?>
-                                let files = await builder.Storage.get('dependencies:files');
-                                tabs.add(
-                                    'files',
-                                    {
-                                        icon: "file-earmark",
-                                        label: builder.Locale.get("Files"),
-                                    },
-                                    function(tab,nav){
-                                        card.files = tab;
-                                        FilesFeed(files ?? [], tab, {
-                                            targetTable: "leads",
-                                            targetId: record.id,
-                                            isPublic: 1,
-                                        });
-                                    },
-                                );
-                            <?php endif; ?>
+
+                            // Documents
                             <?php if($this->Helper->Core->isInstalled('documents')): ?>
+
+                                // Retrieve the documents
                                 let documents = await builder.Storage.get('dependencies:documents');
+
+                                // Add the Documents tab
                                 tabs.add(
                                     'documents',
                                     {
@@ -452,8 +499,14 @@
                                     },
                                 );
                             <?php endif; ?>
+
+                            // Event
                             <?php if($this->Helper->Core->isInstalled('event')): ?>
+
+                                // Retrieve the event
                                 let event = await builder.Storage.get('dependencies:event');
+
+                                // Add the Event tab
                                 tabs.add(
                                     'activities',
                                     {
@@ -467,7 +520,14 @@
                                     },
                                 );
                             <?php endif; ?>
+
+                            // Relationship
                             <?php if($this->Helper->Core->isInstalled('relationship')): ?>
+
+                                // Retrieve the relationship
+                                let relationship = await builder.Storage.get('dependencies:relationship');
+
+                                // Add the Relationship tab
                                 tabs.add(
                                     'related',
                                     {
@@ -477,7 +537,7 @@
                                     function(tab,nav){
                                         tab.addClass('px-4 py-3');
                                         card.related = tab;
-                                        RelationshipFeed(builder.Storage.getKey(), tab, 'leads', function(feed){
+                                        RelationshipFeed(relationship, tab, table, record.id, function(feed){
                                             card.related.feed = feed;
                                         });
                                     },
@@ -499,7 +559,10 @@
                             title: builder.Locale.get("Tasks"),
                         },
                         async function(card,component){
+
+                            // Retrieve the record
                             let record = await builder.Storage.get('record');
+
                             Layout.steps.card = $(document.createElement('div')).addClass('card card-body').appendTo(Layout.steps);
                             Progress.renderer = ProcessTree(record.task, Layout.steps.card, component.body);
                         },
