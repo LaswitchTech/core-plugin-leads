@@ -22,10 +22,10 @@
             },
             success: function(response) {
 
-                // // Configure Storage
-                // builder.Storage.setKey('leads:assigned');
-                // builder.Storage.set(response);
-                // console.log(builder.Storage.get())
+                // Configure Storage
+                builder.Storage.setKey('leads:assigned');
+                builder.Storage.set(response);
+                console.log(builder.Storage.get())
 
                 // Set Actions
                 var actions = {
@@ -273,7 +273,7 @@
                         component.table._component.table.addClass('z-2');
 
                         // Add Records to Layout
-                        for(const [key, record] of Object.entries(response.records)){
+                        for(const [key, record] of Object.entries(builder.Storage.get('records'))){
                             layout.add(record);
                         }
                     },

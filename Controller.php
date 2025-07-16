@@ -38,7 +38,7 @@ class LeadsController extends Controller {
     public function logoAction(): array
     {
         // Retrieve the parameters
-        $id = $this->Request->getParams('GET', 'id') ?? null;
+        $id = intval($this->Request->getParams('GET', 'id') ?? null);
         $size = $this->Request->getParams('GET', 'size') ?? 128;
 
         // Retrieve the lead
@@ -75,8 +75,8 @@ class LeadsController extends Controller {
 
         // Create the default logo from the img folder
         $logo = [
-            'type' => mime_content_type($CONFIG->root() . DIRECTORY_SEPARATOR . 'dist' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'logo.png'),
-            'content' => file_get_contents($CONFIG->root() . DIRECTORY_SEPARATOR . 'dist' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'logo.png')
+            'type' => mime_content_type($this->Config->root() . DIRECTORY_SEPARATOR . 'dist' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'logo.png'),
+            'content' => file_get_contents($this->Config->root() . DIRECTORY_SEPARATOR . 'dist' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'logo.png')
         ];
 
         // Return the default logo

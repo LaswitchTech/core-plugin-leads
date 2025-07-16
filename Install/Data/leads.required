@@ -1,0 +1,16 @@
+[
+    {
+        "id": 9999,
+        "created": "2025-04-07 15:10:38",
+        "modified": "2025-04-07 15:10:38",
+        "owner": "demo",
+        "assignedTo": null,
+        "vcard": null,
+        "task": null,
+        "delegation": null,
+        "firm": null,
+        "client": null,
+        "organization": null,
+        "isArchived": 0
+    }
+]
