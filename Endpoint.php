@@ -522,6 +522,14 @@ class LeadsEndpoint extends BaseEndpoint {
      */
     public function archiveAction(): array
     {
+        // Retrieve the record
+        $record = $this->Model->{$this->name}->fetch(intval($this->Request->getParams('REQUEST','id')));
+
+        // Check if the record is already archived
+        if($record['isArchived']){
+            return ['status' => 200, 'message' => 'The '.$record.' is already archived.', 'data' => ['record' => $record]];
+        }
+
         // Call the parent constructor
         $message = parent::archiveAction();
 
@@ -537,12 +545,12 @@ class LeadsEndpoint extends BaseEndpoint {
                 // Setup a new event
                 $event = [
                     'category' => 'Lead',
-                    'message' => 'Lead Archived for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                    'message' => 'Lead Archived for <vcard>'.$record['vcard']['id'].':'.$record['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                     'icon' => 'circle',
                     'color' => 'secondary',
-                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                    'link' => '/plugin/leads/details?id='.$record['id'].'&name='.urlencode($record['vcard']['name']),
                     'targetTable' => 'leads',
-                    'targetId' => $message['data']['record']['id'],
+                    'targetId' => $record['id'],
                 ];
 
                 // Create the event
@@ -553,10 +561,10 @@ class LeadsEndpoint extends BaseEndpoint {
             if($this->Helper->Core->isInstalled('clients')){
 
                 // Check if the client is not null
-                if(!is_null($message['data']['record']['client']['id'])){
+                if(!is_null($record['client']['id'])){
 
                     // Archive the client
-                    $affectedRows = $this->Model->Clients->archive($message['data']['record']['client']['id']);
+                    $affectedRows = $this->Model->Clients->archive($record['client']['id']);
 
                     // Check if the Event Plugin is accessible
                     if($affectedRows && $this->Helper->Core->isInstalled('event')){
@@ -564,21 +572,21 @@ class LeadsEndpoint extends BaseEndpoint {
                         // Setup a new event
                         $event = [
                             'category' => 'Client',
-                            'message' => 'Client Archived for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                            'message' => 'Client Archived for <vcard>'.$record['vcard']['id'].':'.$record['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                             'icon' => 'circle',
                             'color' => 'secondary',
-                            'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                            'link' => '/plugin/leads/details?id='.$record['id'].'&name='.urlencode($record['vcard']['name']),
                             'targetTable' => 'leads',
-                            'targetId' => $message['data']['record']['id'],
+                            'targetId' => $record['id'],
                         ];
 
                         // Create the event
                         $message['data']['event'][] = $this->Model->Event->create($event);
 
                         // Setup a new event for the client
-                        $event['link'] = '/plugin/clients/index?id='.$message['data']['record']['client']['id'];
+                        $event['link'] = '/plugin/clients/index?id='.$record['client']['id'];
                         $event['targetTable'] = 'clients';
-                        $event['targetId'] = $message['data']['record']['client']['id'];
+                        $event['targetId'] = $record['client']['id'];
 
                         // Create the event
                         $message['data']['event'][] = $this->Model->Event->create($event);
@@ -588,7 +596,7 @@ class LeadsEndpoint extends BaseEndpoint {
                     if($this->Helper->Core->isInstalled('tasks')){
 
                         // Archive the task
-                        $affectedRows = $this->Model->Tasks->archive($message['data']['record']['client']['task']);
+                        $affectedRows = $this->Model->Tasks->archive($record['client']['task']);
 
                         // Check if the Event Plugin is accessible
                         if($affectedRows && $this->Helper->Core->isInstalled('event')){
@@ -596,21 +604,21 @@ class LeadsEndpoint extends BaseEndpoint {
                             // Setup a new event
                             $event = [
                                 'category' => 'Task',
-                                'message' => 'Task Archived for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                                'message' => 'Task Archived for <vcard>'.$record['vcard']['id'].':'.$record['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                                 'icon' => 'circle',
                                 'color' => 'secondary',
-                                'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                                'link' => '/plugin/leads/details?id='.$record['id'].'&name='.urlencode($record['vcard']['name']),
                                 'targetTable' => 'leads',
-                                'targetId' => $message['data']['record']['id'],
+                                'targetId' => $record['id'],
                             ];
 
                             // Create the event
                             $message['data']['event'][] = $this->Model->Event->create($event);
 
                             // Setup a new event for the task
-                            $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['client']['task'];
+                            $event['link'] = '/plugin/tasks/index?id='.$record['client']['task'];
                             $event['targetTable'] = 'tasks';
-                            $event['targetId'] = $message['data']['record']['client']['task'];
+                            $event['targetId'] = $record['client']['task'];
 
                             // Create the event
                             $message['data']['event'][] = $this->Model->Event->create($event);
@@ -623,7 +631,7 @@ class LeadsEndpoint extends BaseEndpoint {
             if($this->Helper->Core->isInstalled('tasks')){
 
                 // Update the record
-                $this->Model->Tasks->archive($message['data']['record']['task']['id']);
+                $this->Model->Tasks->archive($record['task']['id']);
 
                 // Check if the Event Plugin is accessible
                 if($this->Helper->Core->isInstalled('event')){
@@ -631,21 +639,21 @@ class LeadsEndpoint extends BaseEndpoint {
                     // Setup a new event
                     $event = [
                         'category' => 'Task',
-                        'message' => 'Task Archived for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
+                        'message' => 'Task Archived for <vcard>'.$record['vcard']['id'].':'.$record['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                         'icon' => 'circle',
                         'color' => 'secondary',
-                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                        'link' => '/plugin/leads/details?id='.$record['id'].'&name='.urlencode($record['vcard']['name']),
                         'targetTable' => 'leads',
-                        'targetId' => $message['data']['record']['id'],
+                        'targetId' => $record['id'],
                     ];
 
                     // Create the event
                     $message['data']['event'][] = $this->Model->Event->create($event);
 
                     // Setup a new event for the task
-                    $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['task']['id'];
+                    $event['link'] = '/plugin/tasks/index?id='.$record['task']['id'];
                     $event['targetTable'] = 'tasks';
-                    $event['targetId'] = $message['data']['record']['task']['id'];
+                    $event['targetId'] = $record['task']['id'];
 
                     // Create the event
                     $message['data']['event'][] = $this->Model->Event->create($event);
