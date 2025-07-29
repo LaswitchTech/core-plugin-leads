@@ -379,7 +379,7 @@ const LeadModalArchive = function(lead, table = null, row = null){
             const componentModal = component;
 
             // Style the modal
-            component.header.addClass('text-bg-dark');
+            component.addClass('modal-dark');
             component.footer.submit.addClass('btn-dark').removeClass('btn-link').attr({
                 "style": "border-bottom-right-radius: var(--bs-modal-inner-border-radius) !important;border-bottom-left-radius: var(--bs-modal-inner-border-radius) !important;",
             }).text(builder.Locale.get('Archive'));
@@ -436,7 +436,7 @@ const LeadsImportFile = function(callback){
 
             // Styling
             component.dialog.css('transition','opacity 0.3s');
-            component.header.addClass('text-bg-primary');
+            component.addClass('modal-primary');
             component.footer.submit.text(builder.Locale.get('Next')).addClass('btn-primary').removeClass('btn-link');
             component.footer.submit.icon = $(document.createElement('i')).addClass('bi bi-database-up me-1').prependTo(component.footer.submit);
 
@@ -550,7 +550,7 @@ const LeadsImportAssign = function(file, Columns, Required, Important, Defaults,
 
             // Styling
             component.dialog.css('transition','opacity 0.3s');
-            component.header.addClass('text-bg-primary');
+            component.addClass('modal-primary');
             component.footer.submit.text(builder.Locale.get('Import')).addClass('btn-primary').removeClass('btn-link');
             component.footer.submit.icon = $(document.createElement('i')).addClass('bi bi-database-up me-1').prependTo(component.footer.submit);
 
@@ -788,7 +788,7 @@ const LeadsImportAssign = function(file, Columns, Required, Important, Defaults,
 
                                             // Styling
                                             component.dialog.css('transition','opacity 0.3s');
-                                            component.header.addClass('text-bg-warning');
+                                            component.addClass('modal-warning');
                                             component.footer.submit.text(builder.Locale.get('Continue')).addClass('btn-success').removeClass('btn-link');
                                             component.footer.submit.icon = $(document.createElement('i')).addClass('bi bi-arrow-right me-1').prependTo(component.footer.submit);
 
@@ -1045,7 +1045,7 @@ const LeadsImportStart = function(Records, callback){
             const componentModal = component;
 
             // Styling
-            component.header.addClass('text-bg-primary');
+            component.addClass('modal-primary');
             component.footer.remove();
 
             // Create a progress bar
@@ -1283,7 +1283,7 @@ const LeadsAssignSelect = function(callback){
                 },
                 function(modal,component){
                     const componentModal = component;
-                    component.header.addClass('text-bg-primary');
+                    component.addClass('modal-primary');
                     component.footer.submit
                         .addClass('btn-primary')
                         .removeClass('btn-link')
@@ -1345,7 +1345,7 @@ const LeadsAssignStart = function(Records, callback){
             const componentModal = component;
 
             // Styling
-            component.header.addClass('text-bg-warning');
+            component.addClass('modal-warning');
             component.footer.remove();
 
             // Create a progress bar
@@ -1486,7 +1486,7 @@ const LeadsArchiveWarning = function(callback){
             const componentModal = component;
 
             // Style the modal
-            component.header.addClass('text-bg-dark');
+            component.addClass('modal-dark');
             component.footer.submit.addClass('btn-dark').removeClass('btn-link').attr({
                 "style": "border-bottom-right-radius: var(--bs-modal-inner-border-radius) !important;border-bottom-left-radius: var(--bs-modal-inner-border-radius) !important;",
             }).text(builder.Locale.get('Archive'));
@@ -1517,7 +1517,7 @@ const LeadsArchiveStart = function(Records, callback){
             const componentModal = component;
 
             // Styling
-            component.header.addClass('text-bg-dark');
+            component.addClass('modal-dark');
             component.footer.remove();
 
             // Create a progress bar

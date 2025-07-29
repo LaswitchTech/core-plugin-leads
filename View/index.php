@@ -77,7 +77,7 @@
                                         const componentModal = component;
 
                                         // Styling
-                                        component.header.addClass('text-bg-success');
+                                        component.addClass('modal-success');
                                         component.footer.submit.text('Create').addClass('btn-success').removeClass('btn-link');
                                         component.footer.submit.icon = $(document.createElement('i')).addClass('bi bi-stars me-1').prependTo(component.footer.submit);
 
