@@ -81,14 +81,6 @@ class LeadsModel extends BaseModel {
             // Add the Conditions
             foreach($conditions as $key => $condition){
 
-                // Check if the key exists in the definition
-                if(!array_key_exists($condition['key'], $this->definition)){
-
-                    // Remove the key from the data
-                    unset($conditions[$key]);
-                    continue;
-                }
-
                 // Add the condition to the Query
                 $Query->where($condition["key"], $condition["value"], $condition["operator"], $conjunction);
             }
