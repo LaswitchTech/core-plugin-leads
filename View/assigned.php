@@ -10,6 +10,7 @@
                 data: {
                     conditions: [
                         {key: 'isArchived', operator: '<>', value: 1},
+                        {key: 'task.progress', operator: '>', value: 2},
                         {key: 'assignedTo', operator: '=', value: USER_ID},
                     ]
                 },
