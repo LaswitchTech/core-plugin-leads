@@ -23,11 +23,11 @@
                     console.log(await builder.Storage.get());
 
                     // Layout
-                    let Layout = $(document.createElement('div')).addClass('row g-3').appendTo('#layout');
-                    Layout.details = $(document.createElement('div')).addClass('col-12').appendTo(Layout);
-                    Layout.steps = $(document.createElement('div')).addClass('col-12').appendTo(Layout);
-                    Layout.tabs = $(document.createElement('div')).addClass('col-8').appendTo(Layout);
-                    Layout.extra = $(document.createElement('div')).addClass('col-4').appendTo(Layout);
+                    let Layout = $(document.createElement('div')).addClass('row m-0').appendTo('#layout');
+                    Layout.details = $(document.createElement('div')).addClass('col-12 p-0').appendTo(Layout);
+                    Layout.steps = $(document.createElement('div')).addClass('col-12 p-0').appendTo(Layout);
+                    Layout.tabs = $(document.createElement('div')).addClass('col-8 p-3 ps-4 pe-2').appendTo(Layout);
+                    Layout.extra = $(document.createElement('div')).addClass('col-4 p-3 ps-2 pe-4').appendTo(Layout);
 
                     // Details
                     const Details = builder.Component(
@@ -41,6 +41,11 @@
 
                             // Retrieve the record
                             let record = await builder.Storage.get('record');
+
+                            // Set the component
+                            component.card.addClass('rounded-0 border-0');
+                            component.header.remove();
+                            component.footer.remove();
 
                             // Set a minimum height to cover the controls
                             component.body.addClass('d-flex justify-content-start align-items-center position-relative').css('min-height','88px');
@@ -562,8 +567,7 @@
                             // Retrieve the record
                             let record = await builder.Storage.get('record');
 
-                            Layout.steps.card = $(document.createElement('div')).addClass('card card-body').appendTo(Layout.steps);
-                            Progress.renderer = ProcessTree(record.task, Layout.steps.card, component.body);
+                            Progress.renderer = ProcessTree(record.task, Layout.steps, component.body);
                         },
                     );
 
