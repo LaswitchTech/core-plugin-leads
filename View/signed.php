@@ -50,43 +50,7 @@
                     };
 
                     // Set Buttons
-                    var buttons = [
-                        {
-                            extend : 'selected',
-                            className : 'btn-warning requires-selection d-none',
-                            init: function (dt, node){
-                                $(node).removeClass('btn-secondary');
-                            },
-                            text: '<i class="bi bi-person-plus"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Assign')+'</span>',
-                            action:function(e, dt, node, config){
-                                LeadsAssign(dt);
-                            },
-                        },
-                        {
-                            extend : 'selected',
-                            className : 'btn-dark requires-selection d-none',
-                            init: function (dt, node){
-                                $(node).removeClass('btn-secondary');
-                            },
-                            text: '<i class="bi bi-archive"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Archive')+'</span>',
-                            action:function(e, dt, node, config){
-                                LeadsArchive(dt);
-                            },
-                        },
-                        {
-                            extend : 'selected',
-                            className : 'btn-info requires-selection-multiple d-none',
-                            init: function (dt, node){
-                                $(node).removeClass('btn-secondary');
-                            },
-                            text: '<i class="bi bi-link-45deg"></i><span class="ms-2 d-xl-inline d-none">'+builder.Locale.get('Link')+'</span>',
-                            action:function(e, dt, node, config){
-
-                                // Create Relationships
-                                RelationshipsCreate(dt.rows({ selected: true }).data().toArray(), "leads");
-                            },
-                        },
-                    ];
+                    var buttons = [];
 
                     // Layout
                     builder.Layout(
