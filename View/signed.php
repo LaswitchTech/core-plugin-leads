@@ -1,4 +1,4 @@
-<article class="leads" id="layout"></article>
+<article id="layout"></article>
 <script>
     (async function () {
         await builder.Storage._ensureReady?.();
