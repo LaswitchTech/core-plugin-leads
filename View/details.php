@@ -1,4 +1,4 @@
-<div class="col-12" id="layout"></div>
+<article id="layout"></article>
 <script>
     (async function () {
         await builder.Storage._ensureReady?.();
