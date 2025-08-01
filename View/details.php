@@ -26,8 +26,8 @@
                     let Layout = $(document.createElement('div')).addClass('row m-0').appendTo('#layout');
                     Layout.details = $(document.createElement('div')).addClass('col-12 p-0').appendTo(Layout);
                     Layout.steps = $(document.createElement('div')).addClass('col-12 p-0').appendTo(Layout);
-                    Layout.tabs = $(document.createElement('div')).addClass('col-8 p-3 ps-4 pe-2').appendTo(Layout);
-                    Layout.extra = $(document.createElement('div')).addClass('col-4 p-3 ps-2 pe-4').appendTo(Layout);
+                    Layout.tabs = $(document.createElement('div')).addClass('col-8 p-3 ps-4 pe-2 bg-gray-200').appendTo(Layout);
+                    Layout.extra = $(document.createElement('div')).addClass('col-4 p-3 ps-2 pe-4 bg-gray-200').appendTo(Layout);
 
                     // Details
                     const Details = builder.Component(
