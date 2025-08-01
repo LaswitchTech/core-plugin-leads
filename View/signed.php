@@ -54,7 +54,7 @@
 
                     // Layout
                     builder.Component(
-                        "table",
+                        "datatable",
                         "#layout",
                         {
                             class: {
