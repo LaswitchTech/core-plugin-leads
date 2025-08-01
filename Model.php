@@ -18,6 +18,37 @@ class LeadsModel extends BaseModel {
     }
 
     /**
+     * Initialize the Model
+     *
+     * @param string $table
+     * @param string|null $primary
+     * @return void
+     */
+    protected function init(string $table, ?string $primary = 'id'): void
+    {
+        // Call the parent init method
+        parent::init($table, $primary);
+
+        // Loop through the additional tables to join
+        foreach($this->definition as $field => $col){
+
+            // Exclude fields
+            if(in_array($field, ['id', 'created', 'modified', 'isArchived'])) continue;
+
+            // Set the fieldTable
+            $fieldTable = in_array($field,['owner', 'assignedTo']) ? 'users' : $field . 's';
+
+            // Initialize the Schema
+            $schema = $this->Database->schema()->define($fieldTable);
+
+            // Describe the table
+            foreach($schema->describe() as $column){
+                $this->definition[$field.'.'.$column['Field']] = $column;
+            }
+        }
+    }
+
+    /**
      * Process a record
      *
      * @param array $record
@@ -80,6 +111,14 @@ class LeadsModel extends BaseModel {
 
             // Add the Conditions
             foreach($conditions as $key => $condition){
+
+                // Check if the key exists in the definition
+                if(!array_key_exists($condition['key'], $this->definition)){
+
+                    // Remove the key from the data
+                    unset($conditions[$key]);
+                    continue;
+                }
 
                 // Add the condition to the Query
                 $Query->where($condition["key"], $condition["value"], $condition["operator"], $conjunction);
