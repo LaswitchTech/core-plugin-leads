@@ -25,7 +25,7 @@
                 success: async function(response) {
 
                     // Configure Storage
-                    builder.Storage.setKey('leads:index');
+                    builder.Storage.setKey('leads:prospects');
                     await builder.Storage.set(response);
                     console.log(await builder.Storage.get());
 
