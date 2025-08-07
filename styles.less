@@ -1,36 +1,58 @@
-.leads {
-    .dt-buttons {
-        // Reset all rounding on items inside dt-buttons (both direct .btn and wrapped .btn)
-        & > .btn,
-        & > .btn-group > .btn {
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-        }
+// .leads {
+//     // .dt-buttons {
+//     //     // // Reset all rounding on items inside dt-buttons (both direct .btn and wrapped .btn)
+//     //     // & > .btn,
+//     //     // & > .btn-group > .btn {
+//     //     //     border-top-left-radius: 0;
+//     //     //     border-bottom-left-radius: 0;
+//     //     //     border-top-right-radius: 0;
+//     //     //     border-bottom-right-radius: 0;
+//     //     // }
 
-        // FIRST visible = direct .btn
-        & > :nth-child(1 of .btn:not(.d-none):not([hidden]):not(.invisible)) {
-            border-top-left-radius: var(--bs-btn-border-radius);
-            border-bottom-left-radius: var(--bs-btn-border-radius);
-        }
+//     //     // // FIRST visible = direct .btn
+//     //     // & > :nth-child(1 of .btn:not(.d-none):not([hidden]):not(.invisible)) {
+//     //     //     border-top-left-radius: var(--bs-btn-border-radius);
+//     //     //     border-bottom-left-radius: var(--bs-btn-border-radius);
+//     //     // }
 
-        // FIRST visible = wrapped in a .btn-group
-        & > :nth-child(1 of .btn-group:not(.d-none):not([hidden]):not(.invisible)) > .btn {
-            border-top-left-radius: var(--bs-btn-border-radius);
-            border-bottom-left-radius: var(--bs-btn-border-radius);
-        }
+//     //     // // FIRST visible = wrapped in a .btn-group
+//     //     // & > :nth-child(1 of .btn-group:not(.d-none):not([hidden]):not(.invisible)) > .btn {
+//     //     //     border-top-left-radius: var(--bs-btn-border-radius);
+//     //     //     border-bottom-left-radius: var(--bs-btn-border-radius);
+//     //     // }
 
-        // LAST visible = direct .btn
-        & > :nth-last-child(1 of .btn:not(.d-none):not([hidden]):not(.invisible)) {
-            border-top-right-radius: var(--bs-btn-border-radius);
-            border-bottom-right-radius: var(--bs-btn-border-radius);
-        }
+//     //     // // LAST visible = direct .btn
+//     //     // & > :nth-last-child(1 of .btn:not(.d-none):not([hidden]):not(.invisible)) {
+//     //     //     border-top-right-radius: var(--bs-btn-border-radius);
+//     //     //     border-bottom-right-radius: var(--bs-btn-border-radius);
+//     //     // }
 
-        // LAST visible = wrapped in a .btn-group
-        & > :nth-last-child(1 of .btn-group:not(.d-none):not([hidden]):not(.invisible)) > .btn {
-            border-top-right-radius: var(--bs-btn-border-radius);
-            border-bottom-right-radius: var(--bs-btn-border-radius);
-        }
-    }
-}
+//     //     // // LAST visible = wrapped in a .btn-group
+//     //     // & > :nth-last-child(1 of .btn-group:not(.d-none):not([hidden]):not(.invisible)) > .btn {
+//     //     //     border-top-right-radius: var(--bs-btn-border-radius);
+//     //     //     border-bottom-right-radius: var(--bs-btn-border-radius);
+//     //     // }
+
+//     //     .btn-group>.btn:nth-child(n+3),.btn-group>:not(.btn-check)+.btn,.btn-group>.btn-group:not(:first-child)>.btn {
+//     //         border-top-left-radius: 0;
+//     //         border-bottom-left-radius: 0;
+//     //     }
+//     // }
+// }
+// .lead {
+//     .card {
+//         border-radius: 0;
+//         border-bottom: none;
+//         border-left: none;
+//         border-right: none;
+
+//         .card-header {
+//             .card-title {
+//                 margin: 0;
+//                 .card-controls {
+//                     display: none !important;
+//                 }
+//             }
+//         }
+//     }
+// }

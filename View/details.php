@@ -1,4 +1,4 @@
-<article id="layout"></article>
+<article id="layout" class="lead"></article>
 <script>
     (async function () {
         await builder.Storage._ensureReady?.();
@@ -28,6 +28,8 @@
                     Layout.steps = $(document.createElement('div')).addClass('col-12 p-0').appendTo(Layout);
                     Layout.tabs = $(document.createElement('div')).addClass('col-8 p-3 ps-4 pe-2 bg-gray-200').appendTo(Layout);
                     Layout.extra = $(document.createElement('div')).addClass('col-4 p-3 ps-2 pe-4 bg-gray-200').appendTo(Layout);
+                    // Layout.tabs = $(document.createElement('div')).addClass('col-8 p-0').appendTo(Layout);
+                    // Layout.extra = $(document.createElement('div')).addClass('col-4 p-0').appendTo(Layout);
 
                     // Details
                     const Details = builder.Component(
