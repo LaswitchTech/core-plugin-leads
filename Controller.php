@@ -68,7 +68,9 @@ class LeadsController extends Controller {
                     'content' => $content
                 ];
                 // Convert the logo to png format
-                $logo = $this->Helper->Favicon->convert($logo, 'png', $size, $size);
+                if(explode('/',$logo)[1] != 'png'){
+                    $logo = $this->Helper->Favicon->convert($logo, 'png', $size, $size);
+                }
                 return $logo;
             }
         }
