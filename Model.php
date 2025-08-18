@@ -33,7 +33,7 @@ class LeadsModel extends BaseModel {
         foreach($this->definition as $field => $col){
 
             // Exclude fields
-            if(in_array($field, ['id', 'created', 'modified', 'isArchived'])) continue;
+            if(in_array(strtolower($field), ['id', 'created', 'modified', 'isarchived', 'iscompleted', 'targettable', 'targetid'])) continue;
 
             // Set the fieldTable
             $fieldTable = in_array($field,['owner', 'assignedTo']) ? 'users' : $field . 's';
