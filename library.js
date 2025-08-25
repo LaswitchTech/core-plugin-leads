@@ -52,9 +52,25 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                     case 404: color = 'warning'; icon = 'question-diamond'; break;
                     case 500: color = 'danger'; icon = 'bug'; break;
                 }
-                builder.Component("alert",self._component,{icon:icon,color:color,title:title},function(alert,component){component.content.html('<pre class="m-0 p-2">'+content+'</pre>');});
+                self._builder.Component(
+                    "alert",
+                    self._component,
+                    {
+                        class: {
+                            component: 'm-3',
+                        },
+                        dismissible: false,
+                        icon:icon,
+                        color:color,
+                        title:title
+                    },
+                    function(alert,component){
+                        component.content.html('<pre class="m-0 p-2">'+content+'</pre>');
+                    }
+                );
             },
             success: function(response) {
+                console.log('Lead Data Loaded', response);
 
                 // Set Data
                 self._data = response;
