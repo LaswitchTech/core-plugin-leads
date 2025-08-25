@@ -390,7 +390,30 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                                 },
                                 function(tab,nav){
                                     card.tabs.documents = tab;
-                                    // self._widgets.documents = self._builder.Widget("documents",tab,{data: self._data.dependencies.documents ?? {},targetTable: self._properties.table,targetId: self._properties.id});
+                                    self._widgets.documents = self._builder.Widget("documents",tab,{data: self._data.dependencies.documents ?? {},locale: self._data.record.vcard.locale,targetTable: self._properties.table,targetId: self._properties.id,docvals:{
+                                        name: self._data.record.vcard.name,
+                                        dba: self._data.record.vcard.dba,
+                                        locale: self._data.record.vcard.locale,
+                                        title: self._data.record.vcard.title,
+                                        role: self._data.record.vcard.role.join(', '),
+                                        address: self._data.record.vcard.address,
+                                        city: self._data.record.vcard.city,
+                                        state: self._data.record.vcard.state.name,
+                                        zipcode: self._data.record.vcard.zipcode,
+                                        country: self._data.record.vcard.country.name,
+                                        phone: self._data.record.vcard.phone,
+                                        mobile: self._data.record.vcard.mobile,
+                                        tollfree: self._data.record.vcard.tollfree,
+                                        fax: self._data.record.vcard.fax,
+                                        email: self._data.record.vcard.email,
+                                        website: self._data.record.vcard.website,
+                                        tags: self._data.record.vcard.tags.join(', '),
+                                        industries: self._data.record.vcard.industries.join(', '),
+                                        businessNumber: self._data.record.vcard.businessNumber,
+                                        taxExtension: self._data.record.vcard.taxExtension,
+                                        importerExtension: self._data.record.vcard.importerExtension,
+                                        avatar: '/avatar?id=' + self._data.record.vcard.id,
+                                    }});
                                 },
                             );
                         }
@@ -407,7 +430,7 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                                 },
                                 function(tab,nav){
                                     card.tabs.services = tab;
-                                    // self._widgets.services = self._builder.Widget("services",tab,{data: self._data.dependencies.services ?? {},targetTable: self._properties.table,targetId: self._properties.id});
+                                    self._widgets.services = self._builder.Widget("services",tab,{data: self._data.dependencies.services ?? {},targetTable: self._properties.table,targetId: self._properties.id});
                                 },
                             );
                         }
@@ -424,24 +447,7 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                                 },
                                 function(tab,nav){
                                     card.tabs.event = tab;
-                                    // self._widgets.event = self._builder.Widget("events",tab,{data: self._data.dependencies.event ?? {},targetTable: self._properties.table,targetId: self._properties.id});
-                                },
-                            );
-                        }
-
-                        // Relationship
-                        if(self._data.extensions.includes('relationship')){
-
-                            // Add the Relationship tab
-                            tabs.add(
-                                'relationship',
-                                {
-                                    icon: "diagram-2",
-                                    label: builder.Locale.get("Related"),
-                                },
-                                function(tab,nav){
-                                    card.tabs.relationship = tab;
-                                    // self._widgets.relationship = self._builder.Widget("relationships",tab,{data: self._data.dependencies.relationship ?? {},targetTable: self._properties.table,targetId: self._properties.id});
+                                    self._widgets.event = self._builder.Widget("events",tab,{data: self._data.dependencies.event ?? {},targetTable: self._properties.table,targetId: self._properties.id});
                                 },
                             );
                         }
@@ -454,7 +460,7 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                                 {
                                     class: {
                                         steps: 'border-bottom p-3 py-2',
-                                        pagination: 'p-3 py-2 btn-group w-100',
+                                        pagination: 'p-3 py-2 btn-group rounded-0 w-100 border-bottom',
                                     },
                                     data: self._data.record.task.id,
                                 },
@@ -462,6 +468,13 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                                     widget.controls().appendTo(self._component.steps)
                                 }
                             );
+                        }
+
+                        // Relationship
+                        if(self._data.extensions.includes('relationship')){
+
+                            // Create the Relationship widget
+                            self._widgets.relationship = self._builder.Widget("related",self._component.tasks,{data: self._data.dependencies.relationship ?? {},targetTable: self._properties.table,targetId: self._properties.id});
                         }
 
                         // Check if autoStart is enabled
@@ -609,34 +622,34 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
 
         // Followups
         if(self._data.extensions.includes('followups')){
-            // self._widgets.followups.calls.load(self._data.dependencies.followups ?? {});
-            // self._widgets.followups.callbacks.load(self._data.dependencies.followups ?? {});
-            // self._widgets.followups.meetings.load(self._data.dependencies.followups ?? {});
+            self._widgets.followups.calls.load(self._data.dependencies.followups ?? {});
+            self._widgets.followups.callbacks.load(self._data.dependencies.followups ?? {});
+            self._widgets.followups.meetings.load(self._data.dependencies.followups ?? {});
         }
 
         // Files
         if(self._data.extensions.includes('files')){
-            // self._widgets.files.load(self._data.dependencies.files ?? {});
+            self._widgets.files.load(self._data.dependencies.files ?? {});
         }
 
         // Documents
         if(self._data.extensions.includes('documents')){
-            // self._widgets.documents.load(self._data.dependencies.documents ?? {});
+            self._widgets.documents.load(self._data.dependencies.documents ?? {});
         }
 
         // Services
         if(self._data.extensions.includes('services')){
-            // self._widgets.services.load(self._data.dependencies.services ?? {});
+            self._widgets.services.load(self._data.dependencies.services ?? {});
         }
 
         // Event
         if(self._data.extensions.includes('event')){
-            // self._widgets.event.load(self._data.dependencies.event ?? {});
+            self._widgets.event.load(self._data.dependencies.event ?? {});
         }
 
         // Relationship
         if(self._data.extensions.includes('relationship')){
-            // self._widgets.relationship.load(self._data.dependencies.relationship ?? {});
+            self._widgets.relationship.load(self._data.dependencies.relationship ?? {});
         }
     }
 });
