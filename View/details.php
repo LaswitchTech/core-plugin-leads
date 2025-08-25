@@ -1,4 +1,4 @@
-<article id="layout" class="lead-profile-deprecated"></article>
+<article id="layout"></article>
 <script>
     (function () {
         $(document).ready(function(){
