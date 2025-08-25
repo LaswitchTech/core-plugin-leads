@@ -9,7 +9,7 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
             },
             id: null,
             table: 'leads',
-            interval: 10000,
+            interval: 15000,
             autoStart: true,
             callback: {},
         };
