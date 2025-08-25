@@ -68,15 +68,17 @@ class LeadsController extends Controller {
                     'content' => $content
                 ];
                 // Convert the logo to png format
-                $logo = $this->Helper->Favicon->convert($logo, 'png', $size, $size);
+                if(explode('/',$logo)[1] != 'png'){
+                    $logo = $this->Helper->Favicon->convert($logo, 'png', $size, $size);
+                }
                 return $logo;
             }
         }
 
         // Create the default logo from the img folder
         $logo = [
-            'type' => mime_content_type($this->Config->root() . DIRECTORY_SEPARATOR . 'dist' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'logo.png'),
-            'content' => file_get_contents($this->Config->root() . DIRECTORY_SEPARATOR . 'dist' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'logo.png')
+            'type' => mime_content_type($this->Config->root() . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'logo.png'),
+            'content' => file_get_contents($this->Config->root() . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'logo.png')
         ];
 
         // Return the default logo
