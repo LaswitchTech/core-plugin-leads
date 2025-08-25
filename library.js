@@ -108,7 +108,10 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                     }).text(self._builder.Locale.get('Archive')).appendTo(self._component.details.controls.group);
                     self._component.details.controls.group.archive.icon = $(document.createElement('i')).addClass('bi bi-archive me-1').prependTo(self._component.details.controls.group.archive);
                     self._component.details.controls.group.archive.click(function(){
-                        self._builder.Widget('task',{data: self._data.record.task.id}).archive(function(data){});
+                        self._builder.Widget('task',{data: self._data.record.task.id}).archive(function(data){
+                            // Refresh the page
+                            window.reload();
+                        });
                     });
                 }
 
