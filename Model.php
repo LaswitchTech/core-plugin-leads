@@ -43,7 +43,30 @@ class LeadsModel extends BaseModel {
 
             // Describe the table
             foreach($schema->describe() as $column){
+
+                // Add the column to the definition
                 $this->definition[$field.'.'.$column['Field']] = $column;
+
+                // Check if the field is a complex field
+                if(in_array(strtolower($field), ['lead', 'client'])){
+
+                    // Check if the field is a complex field
+                    if(in_array(strtolower($column['Field']), ['task'])){
+
+                        // Set the fieldTable
+                        $nestedTable = in_array($field,['owner', 'assignedTo']) ? 'users' : $field . 's';
+
+                        // Initialize the Schema
+                        $nestedSchema = $this->Database->schema()->define($nestedTable);
+
+                        // Describe the table
+                        foreach($nestedSchema->describe() as $nestedColumn){
+
+                            // Add the nestedColumn to the definition
+                            $this->definition[$field.'.'.$column['Field'].'.'.$nestedColumn['Field']] = $nestedColumn;
+                        }
+                    };
+                };
             }
         }
     }
@@ -91,12 +114,13 @@ class LeadsModel extends BaseModel {
             ->table($this->table)
             ->select('*')
             ->join('owner', 'users', 'username')
-            ->join('assignedTo', 'users', 'id')
             ->join('vcard', 'vcards', 'id')
             ->join('task', 'tasks', 'id')
+            ->join('task.assignedTo', 'users', 'id')
             ->join('delegation', 'delegations', 'id')
             ->join('firm', 'firms', 'id')
             ->join('client', 'clients', 'id')
+            ->join('client.task', 'tasks', 'id')
             ->join('organization', 'organizations', 'id')
             ->index($this->primary)
             ->filter()
@@ -152,17 +176,20 @@ class LeadsModel extends BaseModel {
             ->table($this->table)
             ->select('*')
             ->join('owner', 'users', 'username')
-            ->join('assignedTo', 'users', 'id')
             ->join('vcard', 'vcards', 'id')
             ->join('task', 'tasks', 'id')
             ->join('delegation', 'delegations', 'id')
             ->join('firm', 'firms', 'id')
             ->join('client', 'clients', 'id')
+            ->join('client.task', 'tasks', 'id')
             ->join('organization', 'organizations', 'id')
             ->filter()
             ->where('id', 9999, '<>')
             ->where('organization', $this->Auth->user()->organization()->id)
             ->where('isArchived', 1, '<>')
+            ->where('client.isArchived', 1, '<>')
+            ->where('client.task.isArchived', 1, '<>')
+            ->where('task.isArchived', 1, '<>')
             ->filter()
             ->where($this->primary, $id)
             ->limit(1);
