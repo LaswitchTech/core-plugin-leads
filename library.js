@@ -1117,7 +1117,7 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
 
                                                         // Create a promise for each record
                                                         for(const [key, record] of Object.entries(self._properties.data)){
-                                                            promises.push(function(){
+                                                            promises.push(function(bar){
                                                                 return new Promise((res, rej) => {
 
                                                                     // AJAX Request
@@ -1128,11 +1128,13 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                                                         data: form.val(),
                                                                         error: function(xhr, status, error) {
                                                                             console.error('Error assigning user:', error);
+                                                                            bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
                                                                             rej(error);
                                                                         },
                                                                         success: function(response) {
 
                                                                             // Resolve the promise
+                                                                            bar.removeClass('text-bg-danger text-bg-success').addClass('text-bg-primary');
                                                                             res();
                                                                         },
                                                                     });
@@ -1245,7 +1247,7 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                 if(current.id != record.id){
 
                                     // Create the promise
-                                    promises.push(function(){
+                                    promises.push(function(bar){
                                         return new Promise((res, rej) => {
 
                                             // AJAX Request
@@ -1261,11 +1263,13 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                                 },
                                                 error: function(xhr, status, error) {
                                                     console.error('Error linking this record:', error);
+                                                    bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
                                                     rej(error);
                                                 },
                                                 success: function(response) {
 
                                                     // Resolve the promise
+                                                    bar.removeClass('text-bg-danger text-bg-success').addClass('text-bg-primary');
                                                     res();
                                                 },
                                             });
@@ -1327,7 +1331,7 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
 
                         // Create a promise for each record
                         for(const [key, record] of Object.entries(self._properties.data)){
-                            promises.push(function(){
+                            promises.push(function(bar){
                                 return new Promise((res, rej) => {
 
                                     // AJAX Request
@@ -1336,11 +1340,13 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                         type: 'GET',dataType: 'json',
                                         error: function(xhr, status, error) {
                                             console.error('Error archiving this task:', error);
+                                            bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
                                             rej(error);
                                         },
                                         success: function(response) {
 
                                             // Resolve the promise
+                                            bar.removeClass('text-bg-success text-bg-danger').addClass('text-bg-primary');
                                             res();
                                         },
                                     });
@@ -1425,14 +1431,14 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                         for(const [key, promise] of Object.entries(promises)){
 
                             // Execute the promises sequentially
-                            await promise();
+                            await promise(component.bar);
 
                             // Set the value
                             progress.set((parseInt(key) + 1));
                         }
 
                         // Update the color of the progress bar
-                        component.bar.removeClass('text-bg-primary').addClass('text-bg-success');
+                        component.bar.removeClass('text-bg-primary text-bg-danger').addClass('text-bg-success');
 
                         // Check if a callback is provided
                         if (typeof callback === 'function') {
