@@ -29,7 +29,14 @@
                         label:'Archive',
                         icon:'archive',
                         action:function(event, table, dt, node, row, data){
-                            // LeadModalArchive(data, table, row);
+                            builder.Widget('task',{data: data.task.id}).archive(function(){
+
+                                // Remove the record from the table
+                                dt.row(row).remove().draw();
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
                         }
                     },
                 },

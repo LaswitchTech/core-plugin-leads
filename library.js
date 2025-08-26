@@ -395,7 +395,7 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                                         dba: self._data.record.vcard.dba,
                                         locale: self._data.record.vcard.locale,
                                         title: self._data.record.vcard.title,
-                                        role: self._data.record.vcard.role.join(', '),
+                                        role: Array.isArray(self._data.record.vcard.role) ?self._data.record.vcard.role.join(', ') : self._data.record.vcard.role,
                                         address: self._data.record.vcard.address,
                                         city: self._data.record.vcard.city,
                                         state: self._data.record.vcard.state.name,
@@ -407,8 +407,8 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                                         fax: self._data.record.vcard.fax,
                                         email: self._data.record.vcard.email,
                                         website: self._data.record.vcard.website,
-                                        tags: self._data.record.vcard.tags.join(', '),
-                                        industries: self._data.record.vcard.industries.join(', '),
+                                        tags: Array.isArray(self._data.record.vcard.tags) ?self._data.record.vcard.tags.join(', ') : self._data.record.vcard.tags,
+                                        industries: Array.isArray(self._data.record.vcard.industries) ?self._data.record.vcard.industries.join(', ') : self._data.record.vcard.industries,
                                         businessNumber: self._data.record.vcard.businessNumber,
                                         taxExtension: self._data.record.vcard.taxExtension,
                                         importerExtension: self._data.record.vcard.importerExtension,
@@ -651,5 +651,803 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
         if(self._data.extensions.includes('relationship')){
             self._widgets.relationship.load(self._data.dependencies.relationship ?? {});
         }
+    }
+});
+
+builder.add('widgets','leads', class extends builder.ComponentClass {
+
+    _init(){
+        this._properties = {
+            class: {
+                component: null,
+            },
+            data: null,
+            table: 'leads',
+            callback: {},
+        };
+    }
+
+    _create(){
+
+        // Set Self
+        const self = this;
+
+        // Create Component
+        this._component = $(document.createElement('div')).attr({
+            'id': 'leads' + this._id,
+            'class': 'leads-widget',
+        });
+        this._component.id = this._component.attr('id');
+
+        // Check if a component class is set
+        if(this._properties.class.component){
+            this._component.addClass(this._properties.class.component);
+        }
+    }
+
+    create(callback = null){
+
+        // Set Self
+        const self = this;
+
+        // Create the Modal
+        this._builder.Component(
+            "modal",
+            {
+                onEnter: false,
+                icon: "plus-lg",
+                title: this._builder.Locale.get("New Prospect"),
+                color: 'success',
+                size: "xl",
+                callback: {
+                    load: function(component, modal){
+                        return new Promise((resolve, reject) => {
+                            try {
+                                // Set the parent
+                                const parent = component.dialog;
+
+                                // Retrieve the libraries
+                                $.ajax({
+                                    url: '/api/library/fetch',
+                                    type: 'GET',dataType: 'json',
+                                    success: function(library) {
+
+                                        // Create the Form
+                                        self._builder.Utility(
+                                            'form',
+                                            component.body,
+                                            {
+                                                class:{
+                                                    component: 'row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3',
+                                                },
+                                                callback: {
+                                                    val: function(values){
+
+                                                        // Check if the industries array is empty
+                                                        if(typeof values.tags !== "undefined" && values.tags.length === 0){
+                                                            values.tags = '[]';
+                                                        }
+
+                                                        // Check if the industries array is empty
+                                                        if(typeof values.industries !== "undefined" && values.industries.length === 0){
+                                                            values.industries = '[]';
+                                                        }
+
+                                                        return values;
+                                                    },
+                                                    submit: function(form){
+
+                                                        // Show the modal spinner
+                                                        modal.spinner(true);
+
+                                                        // AJAX request to create the record
+                                                        $.ajax({
+                                                            url: '/api/leads/create',
+                                                            headers: {'X-CSRF-Authorization': CSRF_KEY},
+                                                            type: 'POST',dataType: 'json',
+                                                            data: form.val(),
+                                                            success: function(response) {
+
+                                                                // Check if the callback is defined and execute it
+                                                                if(typeof callback === 'function'){
+                                                                    callback(response);
+                                                                }
+
+                                                                // Close the modal
+                                                                modal.hide();
+                                                            }
+                                                        });
+                                                    },
+                                                }
+                                            },
+                                            function(form,component){
+
+                                                // Add event listener on the modal submit button
+                                                parent.content.footer.submit.click(function(e){
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    form.submit();
+                                                });
+
+                                                // name
+                                                form.add(
+                                                    'text',
+                                                    {
+                                                        name: 'name',
+                                                        label: self._builder.Locale.get('Name'),
+                                                        placeholder: self._builder.Locale.get('Enter name'),
+                                                        required: true,
+                                                        class: {
+                                                            component: 'col-12',
+                                                            label: 'text-bg-primary',
+                                                        },
+                                                    }
+                                                );
+                                                // dba
+                                                form.add(
+                                                    'text',
+                                                    {
+                                                        name: 'dba',
+                                                        label: self._builder.Locale.get('DBA'),
+                                                        placeholder: self._builder.Locale.get('Enter doing business as'),
+                                                        class: {
+                                                            component: 'col-12',
+                                                        },
+                                                    }
+                                                );
+                                                // address
+                                                form.add(
+                                                    'text',
+                                                    {
+                                                        name: 'address',
+                                                        label: self._builder.Locale.get('Address'),
+                                                        placeholder: self._builder.Locale.get('Enter address'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-7',
+                                                        },
+                                                    }
+                                                );
+                                                // city
+                                                form.add(
+                                                    'text',
+                                                    {
+                                                        name: 'city',
+                                                        label: self._builder.Locale.get('City'),
+                                                        placeholder: self._builder.Locale.get('Enter city'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-5',
+                                                        },
+                                                    }
+                                                );
+                                                // country
+                                                form.add(
+                                                    'select2',
+                                                    {
+                                                        name: 'country',
+                                                        label: self._builder.Locale.get('Country'),
+                                                        placeholder: self._builder.Locale.get('Select country'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                        options: library.options.countries,
+                                                        callback: {
+                                                            onChange: function(input, component){
+
+                                                                // Check if the state input exists
+                                                                if(!form._inputs.state){
+                                                                    return;
+                                                                }
+
+                                                                // Clear the state select2 options
+                                                                form._inputs.state.delete();
+
+                                                                // Add the new options based on the selected country
+                                                                for(const [key, option] of Object.entries(library.options.states[input.val()] || [])){
+                                                                    form._inputs.state.add(option.id, option.text);
+                                                                }
+
+                                                                // Reset the state value
+                                                                form._inputs.state.reset();
+                                                            }
+                                                        },
+                                                    }
+                                                );
+                                                // state
+                                                form.add(
+                                                    'select2',
+                                                    {
+                                                        name: 'state',
+                                                        label: self._builder.Locale.get('State'),
+                                                        placeholder: self._builder.Locale.get('Select state'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                        options: [],
+                                                    }
+                                                );
+                                                // zipcode
+                                                form.add(
+                                                    'zipcode',
+                                                    {
+                                                        name: 'zipcode',
+                                                        label: self._builder.Locale.get('Zipcode'),
+                                                        placeholder: self._builder.Locale.get('Enter zipcode'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                    }
+                                                );
+                                                // email
+                                                form.add(
+                                                    'email',
+                                                    {
+                                                        name: 'email',
+                                                        label: self._builder.Locale.get('Email'),
+                                                        placeholder: self._builder.Locale.get('Enter email'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-8',
+                                                        },
+                                                    }
+                                                );
+                                                // fax
+                                                form.add(
+                                                    'phone',
+                                                    {
+                                                        name: 'fax',
+                                                        label: self._builder.Locale.get('Fax'),
+                                                        placeholder: self._builder.Locale.get('Enter fax'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                    }
+                                                );
+                                                // phone
+                                                form.add(
+                                                    'phoneExt',
+                                                    {
+                                                        name: 'phone',
+                                                        label: self._builder.Locale.get('Phone'),
+                                                        placeholder: self._builder.Locale.get('Enter phone'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                    }
+                                                );
+                                                // mobile
+                                                form.add(
+                                                    'phone',
+                                                    {
+                                                        name: 'mobile',
+                                                        label: self._builder.Locale.get('Mobile'),
+                                                        placeholder: self._builder.Locale.get('Enter mobile'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                    }
+                                                );
+                                                // tollfree
+                                                form.add(
+                                                    'phoneInt',
+                                                    {
+                                                        name: 'tollfree',
+                                                        label: self._builder.Locale.get('Tollfree'),
+                                                        placeholder: self._builder.Locale.get('Enter tollfree'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                    }
+                                                );
+                                                // businessNumber
+                                                form.add(
+                                                    'businessNumber',
+                                                    {
+                                                        name: 'businessNumber',
+                                                        label: self._builder.Locale.get('Business Number'),
+                                                        placeholder: self._builder.Locale.get('Enter business number'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                    }
+                                                );
+                                                // importerExtension
+                                                form.add(
+                                                    'importerExtension',
+                                                    {
+                                                        name: 'importerExtension',
+                                                        label: self._builder.Locale.get('Importer Extension'),
+                                                        placeholder: self._builder.Locale.get('Enter importer extension (RM000N)'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                    }
+                                                );
+                                                // taxExtension
+                                                form.add(
+                                                    'taxExtension',
+                                                    {
+                                                        name: 'taxExtension',
+                                                        label: self._builder.Locale.get('Tax Extension'),
+                                                        placeholder: self._builder.Locale.get('Enter tax extension (RT000N)'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6 col-lg-4',
+                                                        },
+                                                    }
+                                                );
+                                                // locale
+                                                form.add(
+                                                    'select2',
+                                                    {
+                                                        name: 'locale',
+                                                        label: self._builder.Locale.get('Locale'),
+                                                        placeholder: self._builder.Locale.get('Select locale'),
+                                                        value: builder.Locale.current(),
+                                                        class: {
+                                                            component: 'col-12 col-md-6',
+                                                        },
+                                                        options: library.options.locales,
+                                                    }
+                                                );
+                                                // website
+                                                form.add(
+                                                    'text',
+                                                    {
+                                                        name: 'website',
+                                                        label: self._builder.Locale.get('Website'),
+                                                        placeholder: self._builder.Locale.get('Enter website'),
+                                                        class: {
+                                                            component: 'col-12 col-md-6',
+                                                        },
+                                                    }
+                                                );
+                                                // industries
+                                                form.add(
+                                                    'select2',
+                                                    {
+                                                        name: 'industries',
+                                                        label: self._builder.Locale.get('Industries'),
+                                                        placeholder: self._builder.Locale.get('Select industry(s)'),
+                                                        class: {
+                                                            component: 'col-12',
+                                                        },
+                                                        multiple: true,
+                                                        options: library.options.industries,
+                                                        allowClear: true,
+                                                        allowNew: true,
+                                                    }
+                                                );
+                                                // tags
+                                                form.add(
+                                                    'select2',
+                                                    {
+                                                        name: 'tags',
+                                                        label: self._builder.Locale.get('Tags'),
+                                                        placeholder: self._builder.Locale.get('Select tag(s)'),
+                                                        class: {
+                                                            component: 'col-12',
+                                                        },
+                                                        multiple: true,
+                                                        options: library.options.tags,
+                                                        allowClear: true,
+                                                        allowNew: true,
+                                                    }
+                                                );
+
+                                                // Resolve the promise
+                                                resolve();
+                                            },
+                                        );
+                                    },
+                                });
+                            } catch(e) { reject(e); }
+                        });
+                    },
+                },
+            },
+            function(modal,component){
+
+                // Show the modal
+                modal.show();
+            },
+        );
+    }
+
+    import(callback = null){
+
+        // Set Self
+        const self = this;
+    }
+
+    assign(callback = null){
+
+        // Set Self
+        const self = this;
+
+        // Check if data is available
+        if(!this._properties.data || (Array.isArray(this._properties.data) && this._properties.data.length === 0) || (typeof this._properties.data === "object" && Object.keys(this._properties.data).length === 0)){
+            console.error('No lead data available to assign.');
+            return;
+        }
+
+        // Create the Modal
+        this._builder.Component(
+            "modal",
+            {
+                icon: "person-plus",
+                title: this._builder.Locale.get("Assign user"),
+                color: 'warning',
+                callback: {
+                    load: function(component, modal){
+
+                        // Set the component
+                        const parent = component;
+
+                        // Promise to fetch data
+                        return new Promise((resolve, reject) => {
+                            try {
+
+                                // Retrieve members
+                                $.ajax({
+                                    url: '/api/auth/users',
+                                    type: 'GET',dataType: 'json',
+                                    error: function(xhr, status, error) {
+                                        console.error('Error fetching data:', error);
+                                        modal.hide();
+                                        reject(error);
+                                    },
+                                    success: function(response) {
+                                        const members = response.records;
+                                        const options = [];
+                                        for(const [id, member] of Object.entries(members)){
+                                            options.push({id: id, text: member.username});
+                                        }
+
+                                        // Create the Form
+                                        self._builder.Utility(
+                                            'form',
+                                            component.body,
+                                            {
+                                                callback: {
+                                                    submit: function(form){
+
+                                                        // Show the modal spinner
+                                                        modal.spinner(true);
+
+                                                        // Create an array to hold promises
+                                                        const promises = [];
+
+                                                        // Create a promise for each record
+                                                        for(const [key, record] of Object.entries(self._properties.data)){
+                                                            promises.push(function(){
+                                                                return new Promise((res, rej) => {
+
+                                                                    // AJAX Request
+                                                                    $.ajax({
+                                                                        url: '/api/tasks/update?id='+record.task.id,
+                                                                        headers: {'X-CSRF-Authorization': CSRF_KEY},
+                                                                        type: 'POST',dataType: 'json',
+                                                                        data: form.val(),
+                                                                        error: function(xhr, status, error) {
+                                                                            console.error('Error assigning user:', error);
+                                                                            rej(error);
+                                                                        },
+                                                                        success: function(response) {
+
+                                                                            // Resolve the promise
+                                                                            res();
+                                                                        },
+                                                                    });
+                                                                });
+                                                            });
+                                                        }
+
+                                                        // Execute the promises with loader
+                                                        self._loader('warning', promises, function(){
+
+                                                            // Check if a callback is provided
+                                                            if (typeof callback === 'function') {
+                                                                callback(self._properties.data);
+                                                            }
+
+                                                            // Close the modal
+                                                            modal.hide();
+                                                        });
+                                                    },
+                                                }
+                                            },
+                                            function(form,component){
+
+                                                // Add event listener on the modal submit button
+                                                parent.dialog.content.footer.submit.click(function(e){
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    form.submit();
+                                                });
+
+                                                // assignedTo
+                                                form.add(
+                                                    'select2',
+                                                    {
+                                                        name: 'assignedTo',
+                                                        label: self._builder.Locale.get('User'),
+                                                        placeholder: self._builder.Locale.get('Select a user'),
+                                                        class: {
+                                                            component: 'bg-gray-200 p-3 py-2 rounded-0',
+                                                        },
+                                                        options: options,
+                                                    }
+                                                );
+
+                                                // Resolve the promise
+                                                resolve();
+                                            },
+                                        );
+                                    },
+                                });
+                            } catch(e) {
+
+                                // Log the error and reject the promise
+                                console.error('Error in assign modal:', e);
+                                modal.hide();
+                                reject(e);
+                            }
+                        });
+                    },
+                },
+            },
+            function(modal,component){
+
+                // Styling
+                component.body.addClass('p-0');
+
+                // Show the modal
+                modal.show();
+            },
+        );
+    }
+
+    link(callback = null){
+
+        // Set Self
+        const self = this;
+
+        // Check if data is available
+        if(!this._properties.data || (Array.isArray(this._properties.data) && this._properties.data.length === 0) || (typeof this._properties.data === "object" && Object.keys(this._properties.data).length === 0)){
+            console.error('No lead data available to assign.');
+            return;
+        }
+
+        // Create the Modal
+        this._builder.Component(
+            "modal",
+            {
+                icon: "link-45deg",
+                title: this._builder.Locale.get("Are you sure?"),
+                body: this._builder.Locale.get("You are about to link the selected records together. Are you sure you want to continue?"),
+                color: 'info',
+                callback: {
+                    submit: function(element,modal){
+
+                        // Show the modal spinner
+                        modal.spinner(true);
+
+                        // Create an array to hold promises
+                        const promises = [];
+
+
+
+                        // Create a promise for each record
+                        for(const [key, current] of Object.entries(self._properties.data)){
+
+                            // Loop through the records
+                            for(const [k, record] of Object.entries(self._properties.data)){
+
+                                // Skip current record
+                                if(current.id != record.id){
+
+                                    // Create the promise
+                                    promises.push(function(){
+                                        return new Promise((res, rej) => {
+
+                                            // AJAX Request
+                                            $.ajax({
+                                                url: '/api/relationship/create',
+                                                headers: {'X-CSRF-Authorization': CSRF_KEY},
+                                                type: 'POST',dataType: 'json',
+                                                data: {
+                                                    "sourceTable": self._properties.table ?? 'leads',
+                                                    "sourceId": current.id,
+                                                    "targetTable": self._properties.table ?? 'leads',
+                                                    "targetId": record.id,
+                                                },
+                                                error: function(xhr, status, error) {
+                                                    console.error('Error linking this record:', error);
+                                                    rej(error);
+                                                },
+                                                success: function(response) {
+
+                                                    // Resolve the promise
+                                                    res();
+                                                },
+                                            });
+                                        });
+                                    });
+                                }
+                            }
+                        }
+
+                        // Execute the promises with loader
+                        self._loader('info', promises, function(){
+
+                            // Check if a callback is provided
+                            if (typeof callback === 'function') {
+                                callback(self._properties.data);
+                            }
+
+                            // Close the modal
+                            modal.hide();
+                        });
+                    },
+                },
+            },
+            function(modal,component){
+
+                // Show the modal
+                modal.show();
+            },
+        );
+    }
+
+    archive(callback = null){
+
+        // Set Self
+        const self = this;
+
+        // Check if data is available
+        if(!this._properties.data || (Array.isArray(this._properties.data) && this._properties.data.length === 0) || (typeof this._properties.data === "object" && Object.keys(this._properties.data).length === 0)){
+            console.error('No lead data available to assign.');
+            return;
+        }
+
+        // Create the Modal
+        this._builder.Component(
+            "modal",
+            {
+                icon: "archive",
+                title: this._builder.Locale.get("Are you sure?"),
+                body: this._builder.Locale.get("You are about to archive this task(s). Are you sure you want to continue?"),
+                color: 'dark',
+                callback: {
+                    submit: function(element,modal){
+
+                        // Show the modal spinner
+                        modal.spinner(true);
+
+                        // Create an array to hold promises
+                        const promises = [];
+
+                        // Create a promise for each record
+                        for(const [key, record] of Object.entries(self._properties.data)){
+                            promises.push(function(){
+                                return new Promise((res, rej) => {
+
+                                    // AJAX Request
+                                    $.ajax({
+                                        url: '/api/tasks/archive?id='+record.task.id,
+                                        type: 'GET',dataType: 'json',
+                                        error: function(xhr, status, error) {
+                                            console.error('Error archiving this task:', error);
+                                            rej(error);
+                                        },
+                                        success: function(response) {
+
+                                            // Resolve the promise
+                                            res();
+                                        },
+                                    });
+                                });
+                            });
+                        }
+
+                        // Execute the promises with loader
+                        self._loader('dark', promises, function(){
+
+                            // Check if a callback is provided
+                            if (typeof callback === 'function') {
+                                callback(self._properties.data);
+                            }
+
+                            // Close the modal
+                            modal.hide();
+                        });
+                    },
+                },
+            },
+            function(modal,component){
+
+                // Show the modal
+                modal.show();
+            },
+        );
+    }
+
+    _loader(color, promises, callback = null){
+
+        // Set Self
+        const self = this;
+
+        // Check if promises contains records
+        if(!promises || (Array.isArray(promises) && promises.length === 0) || !Array.isArray(promises) ){
+            console.error('No records available to process.');
+            return;
+        }
+
+        // Create the Modal
+        this._builder.Component(
+            "modal",
+            {
+                icon: "code-slash",
+                title: this._builder.Locale.get("Processing..."),
+                color: color,
+                cancel: false,
+                submit: false,
+                static: true,
+                size: "lg",
+            },
+            function(modal,component){
+
+                // Set the parent
+                const parent = component;
+
+                // Styling
+                component.body.addClass('bg-gray-200 p-3 py-2 rounded-bottom');
+
+                // Create a progress bar
+                component.progress = builder.Component(
+                    'progress',
+                    component.body,
+                    {
+                        size: '32px',
+                        color: 'primary',
+                        striped: true,
+                        animated: true,
+                        scale: promises.length,
+                        label: "{percent} completed {progress} of {scale} records processed",
+                    },
+                    async function(progress,component){
+
+                        // Set default value
+                        progress.set(0);
+
+                        // Show the modal
+                        modal.show();
+
+                        // Loop through the records
+                        for(const [key, promise] of Object.entries(promises)){
+
+                            // Execute the promises sequentially
+                            await promise();
+
+                            // Set the value
+                            progress.set((parseInt(key) + 1));
+                        }
+
+                        // Update the color of the progress bar
+                        component.bar.removeClass('text-bg-primary').addClass('text-bg-success');
+
+                        // Check if a callback is provided
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+
+                        // Timeout to close the modal
+                        setTimeout(function(){
+
+                            // Close the modal
+                            modal.hide();
+                        }, 1000);
+                    },
+                );
+            },
+        );
     }
 });

@@ -17,8 +17,8 @@ class LeadsEndpoint extends BaseEndpoint {
         $this->init('leads');
 
         // Set Properties
-        $this->required = ['name','email','phone','locale'];
-        $this->optional = ['tollfree','mobile','fax','tags','dba','industries','businessNumber','taxExtension','importerExtension','website','address','city','country','state','zipcode'];
+        $this->required = ['name'];
+        $this->optional = ['tollfree','locale','email','phone','mobile','fax','tags','dba','industries','businessNumber','taxExtension','importerExtension','website','address','city','country','state','zipcode'];
     }
 
     /**
