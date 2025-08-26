@@ -6,8 +6,7 @@
                 url: '/api/leads/fetchAll',
                 conditions: [
                     {key: 'isArchived', operator: '<>', value: 1},
-                    {key: 'client.isArchived', operator: '<>', value: 1},
-                    {key: 'client.task.isArchived', operator: '<>', value: 1},
+                    {key: 'client', operator: 'IS NULL', value: null},
                     {key: 'task.isArchived', operator: '<>', value: 1},
                     {key: 'task.progress', operator: '<=', value: 2},
                 ],
