@@ -26,7 +26,14 @@
                         label:'Archive',
                         icon:'archive',
                         action:function(event, table, dt, node, row, data){
-                            // LeadModalArchive(data, table, row);
+                            builder.Widget('task',{data: data.task.id}).archive(function(){
+
+                                // Remove the record from the table
+                                dt.row(row).remove().draw();
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
                         }
                     },
                 },
@@ -38,75 +45,11 @@
                         },
                         text: '<i class="bi bi-plus-lg"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Add')+'</span>',
                         action:function(e, dt, node, config){
-                            // builder.Component(
-                            //     "modal",
-                            //     {
-                            //         callback: {
-                            //             submit: function(element,modal){
-                            //                 element.form.submit();
-                            //             },
-                            //         },
-                            //         onEnter: true,
-                            //         destroy:true,
-                            //         icon: "plus-lg",
-                            //         title: builder.Locale.get("Add Lead"),
-                            //         cancel: true,
-                            //         submit: true,
-                            //         size: 'xl',
-                            //     },
-                            //     function(modal,component){
+                            builder.Widget('leads').create(function(response){
 
-                            //         // Save Modal Component for select2 fields
-                            //         const componentModal = component;
-
-                            //         // Styling
-                            //         component.addClass('modal-success');
-                            //         component.footer.submit.text('Create').addClass('btn-success').removeClass('btn-link');
-                            //         component.footer.submit.icon = $(document.createElement('i')).addClass('bi bi-stars me-1').prependTo(component.footer.submit);
-
-                            //         // Create Form
-                            //         component.form = builder.Component(
-                            //             'form',
-                            //             component.body,
-                            //             {
-                            //                 class:{
-                            //                     form: 'row row-cols-3',
-                            //                     field: 'mb-3 col',
-                            //                 },
-                            //                 callback:{
-                            //                     val: function(values){
-                            //                         return values;
-                            //                     },
-                            //                     submit: function(form){
-                            //                         $.ajax({
-                            //                             url: '/api/leads/create',
-                            //                             headers: {'X-CSRF-Authorization': CSRF_KEY},
-                            //                             type: 'POST',dataType: 'json',
-                            //                             data: form.val(),
-                            //                             success: function(response) {
-                            //                                 console.log(response);
-
-                            //                                 // Add the followup to the datatable
-                            //                                 dt.row.add(response.record).draw();
-
-                            //                                 // Close the modal
-                            //                                 modal.hide();
-                            //                             }
-                            //                         });
-                            //                     },
-                            //                 },
-                            //             },
-                            //             function(form,component){
-
-                            //                 // Generate Form
-                            //                 LeadForm(form,{country:"CA",state:"QC",taxExtension:"0001",importerExtension:"0001"},componentModal);
-
-                            //                 //Show the modal
-                            //                 modal.show();
-                            //             },
-                            //         );
-                            //     },
-                            // );
+                                // Add the record to the table
+                                dt.row.add(response.record).draw();
+                            });
                         },
                     },
                     {
@@ -127,7 +70,11 @@
                         },
                         text: '<i class="bi bi-person-plus"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Assign')+'</span>',
                         action:function(e, dt, node, config){
-                            // LeadsAssign(dt);
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).assign(function(records){
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
                         },
                     },
                     {
@@ -138,7 +85,14 @@
                         },
                         text: '<i class="bi bi-archive"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Archive')+'</span>',
                         action:function(e, dt, node, config){
-                            // LeadsArchive(dt);
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).archive(function(records){
+
+                                // Remove the records from the table
+                                dt.rows({ selected: true }).remove().draw();
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
                         },
                     },
                     {
@@ -149,9 +103,11 @@
                         },
                         text: '<i class="bi bi-link-45deg"></i><span class="ms-2 d-xl-inline d-none">'+builder.Locale.get('Link')+'</span>',
                         action:function(e, dt, node, config){
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).link(function(records){
 
-                            // // Create Relationships
-                            // RelationshipsCreate(dt.rows({ selected: true }).data().toArray(), "leads");
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
                         },
                     },
                 ],

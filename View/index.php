@@ -26,7 +26,14 @@
                         label:'Archive',
                         icon:'archive',
                         action:function(event, table, dt, node, row, data){
-                            // LeadModalArchive(data, table, row);
+                            builder.Widget('task',{data: data.task.id}).archive(function(){
+
+                                // Remove the record from the table
+                                dt.row(row).remove().draw();
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
                         }
                     },
                 },
@@ -39,7 +46,11 @@
                         },
                         text: '<i class="bi bi-person-plus"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Assign')+'</span>',
                         action:function(e, dt, node, config){
-                            // LeadsAssign(dt);
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).assign(function(records){
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
                         },
                     },
                     {
@@ -50,7 +61,14 @@
                         },
                         text: '<i class="bi bi-archive"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Archive')+'</span>',
                         action:function(e, dt, node, config){
-                            // LeadsArchive(dt);
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).archive(function(records){
+
+                                // Remove the records from the table
+                                dt.rows({ selected: true }).remove().draw();
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
                         },
                     },
                     {
@@ -61,9 +79,11 @@
                         },
                         text: '<i class="bi bi-link-45deg"></i><span class="ms-2 d-xl-inline d-none">'+builder.Locale.get('Link')+'</span>',
                         action:function(e, dt, node, config){
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).link(function(records){
 
-                            // // Create Relationships
-                            // RelationshipsCreate(dt.rows({ selected: true }).data().toArray(), "leads");
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
                         },
                     },
                 ],
