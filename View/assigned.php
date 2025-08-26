@@ -6,12 +6,11 @@
                 url: '/api/leads/fetchAll',
                 conditions: [
                     {key: 'isArchived', operator: '<>', value: 1},
-                    {key: 'client.isArchived', operator: '<>', value: 1},
-                    {key: 'client.task.isArchived', operator: '<>', value: 1},
+                    {key: 'client', operator: 'IS NULL', value: null},
                     {key: 'task.isArchived', operator: '<>', value: 1},
                     {key: 'task.progress', operator: '>', value: 2},
                     {key: 'task.assignedTo', operator: '=', value: USER_ID},
-                    {key: 'client', operator: 'IS NULL', value: null},
+                    {key: 'task.isCompleted', operator: '<>', value: 1},
                 ],
                 dblclick: function(event, table, dt, node, data){
                     window.location.href = "/plugin/leads/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
