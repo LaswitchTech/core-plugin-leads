@@ -53,13 +53,17 @@
                         },
                     },
                     {
-                        className : 'btn-primary',
+                        className : 'btn-teal',
                         init: function (dt, node){
                             $(node).removeClass('btn-secondary');
                         },
                         text: '<i class="bi bi-database-up"></i><span class="ms-2 d-xl-inline d-none">'+builder.Locale.get('Import')+'</span>',
                         action:function(e, dt, node, config){
-                            // LeadsImport(dt);
+                            builder.Widget('leads').import(function(response){
+
+                                // Add the record to the table
+                                dt.row.add(response.record).draw();
+                            });
                         },
                     },
                     {
