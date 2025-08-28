@@ -11,7 +11,6 @@
                 dblclick: function(event, table, dt, node, data){
                     window.location.href = "/plugin/leads/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
                 },
-                selectTools: false,
                 actions: {
                     details:{
                         label:'Details',
