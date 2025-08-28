@@ -1757,6 +1757,84 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
         );
     }
 
+    promote(callback = null, progress = null){
+
+        // Set Self
+        const self = this;
+
+        // Check if data is available
+        if(!this._properties.data || (Array.isArray(this._properties.data) && this._properties.data.length === 0) || (typeof this._properties.data === "object" && Object.keys(this._properties.data).length === 0)){
+            console.error('No lead data available to assign.');
+            return;
+        }
+
+        // Create the Modal
+        this._builder.Component(
+            "modal",
+            {
+                icon: "chevron-bar-right",
+                title: this._builder.Locale.get("Are you sure?"),
+                body: this._builder.Locale.get("You are about to promote these tasks. Are you sure you want to continue?"),
+                color: 'purple',
+                callback: {
+                    submit: function(element,modal){
+
+                        // Show the modal spinner
+                        modal.spinner(true);
+
+                        // Create an array to hold promises
+                        const promises = [];
+
+                        // Create a promise for each record
+                        for(const [key, record] of Object.entries(self._properties.data)){
+                            console.log(key, record);
+                            promises.push(function(bar){
+                                return new Promise((res, rej) => {
+
+                                    // AJAX Request
+                                    $.ajax({
+                                        url: '/api/tasks/promote?id='+record.task.id,
+                                        headers: {'X-CSRF-Authorization': CSRF_KEY},
+                                        type: 'POST',dataType: 'json',
+                                        data: {progress: progress ?? (record.task.progress + 1)},
+                                        error: function(xhr, status, error) {
+                                            console.error('Error while promoting this task:', error);
+                                            bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
+                                            rej(error);
+                                        },
+                                        success: function(response) {
+
+                                            // Resolve the promise
+                                            bar.removeClass('text-bg-success text-bg-danger').addClass('text-bg-primary');
+                                            res();
+                                        },
+                                    });
+                                });
+                            });
+                        }
+
+                        // Execute the promises with loader
+                        self._loader('purple', promises, function(){
+
+                            // Check if a callback is provided
+                            if (typeof callback === 'function') {
+                                callback(self._properties.data);
+                            }
+
+                            // Close the modal
+                            modal.hide();
+                        });
+                    },
+                },
+            },
+            function(modal,component){
+
+                // Show the modal
+                modal.show();
+            },
+        );
+    }
+
     _loader(color, promises, callback = null){
 
         // Set Self
