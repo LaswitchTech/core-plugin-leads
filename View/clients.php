@@ -6,14 +6,17 @@
                 url: '/api/leads/fetchAll',
                 conditions: [
                     {key: 'isArchived', operator: '<>', value: 1},
-                    {key: 'client', operator: 'IS NULL', value: null},
+                    {key: 'client', operator: 'IS NOT NULL', value: null},
+                    {key: 'client.isArchived', operator: '<>', value: 1},
+                    {key: 'client.task.isArchived', operator: '<>', value: 1},
                     {key: 'task.isArchived', operator: '<>', value: 1},
                     {key: 'task.isCompleted', operator: '<>', value: 1},
-                    {key: 'task.progress', operator: '<=', value: 2},
+                    {key: 'task.progress', operator: '>', value: 2},
                 ],
                 dblclick: function(event, table, dt, node, data){
                     window.location.href = "/plugin/leads/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
                 },
+                selectTools: false,
                 actions: {
                     details:{
                         label:'Details',
@@ -38,34 +41,6 @@
                     },
                 },
                 buttons: [
-                    {
-                        className : 'btn-success',
-                        init: function (dt, node){
-                            $(node).removeClass('btn-secondary');
-                        },
-                        text: '<i class="bi bi-plus-lg"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Add')+'</span>',
-                        action:function(e, dt, node, config){
-                            builder.Widget('leads').create(function(response){
-
-                                // Add the record to the table
-                                dt.row.add(response.record).draw();
-                            });
-                        },
-                    },
-                    {
-                        className : 'btn-teal',
-                        init: function (dt, node){
-                            $(node).removeClass('btn-secondary');
-                        },
-                        text: '<i class="bi bi-database-up"></i><span class="ms-2 d-xl-inline d-none">'+builder.Locale.get('Import')+'</span>',
-                        action:function(e, dt, node, config){
-                            builder.Widget('leads').import(function(response){
-
-                                // Add the record to the table
-                                dt.row.add(response.record).draw();
-                            });
-                        },
-                    },
                     {
                         extend : 'selected',
                         className : 'btn-warning requires-selection d-none',

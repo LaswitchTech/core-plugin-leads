@@ -5,11 +5,8 @@
             builder.Layout('index',"#layout",{
                 url: '/api/leads/fetchAll',
                 conditions: [
-                    {key: 'isArchived', operator: '<>', value: 1},
-                    {key: 'client', operator: 'IS NULL', value: null},
+                    {key: 'task.isCompleted', operator: '=', value: 1},
                     {key: 'task.isArchived', operator: '<>', value: 1},
-                    {key: 'task.isCompleted', operator: '<>', value: 1},
-                    {key: 'task.progress', operator: '<=', value: 2},
                 ],
                 dblclick: function(event, table, dt, node, data){
                     window.location.href = "/plugin/leads/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
@@ -22,99 +19,22 @@
                             window.location.href = "/plugin/leads/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
                         }
                     },
-                    archive:{
-                        label:'Archive',
-                        icon:'archive',
-                        action:function(event, table, dt, node, row, data){
-                            builder.Widget('task',{data: data.task.id}).archive(function(){
+                    // open:{
+                    //     label:'Archive',
+                    //     icon:'archive',
+                    //     action:function(event, table, dt, node, row, data){
+                    //         builder.Widget('task',{data: data.task.id}).archive(function(){
 
-                                // Remove the record from the table
-                                dt.row(row).remove().draw();
+                    //             // Remove the record from the table
+                    //             dt.row(row).remove().draw();
 
-                                // Deselect all rows
-                                dt.rows().deselect();
-                            });
-                        }
-                    },
+                    //             // Deselect all rows
+                    //             dt.rows().deselect();
+                    //         });
+                    //     }
+                    // },
                 },
-                buttons: [
-                    {
-                        className : 'btn-success',
-                        init: function (dt, node){
-                            $(node).removeClass('btn-secondary');
-                        },
-                        text: '<i class="bi bi-plus-lg"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Add')+'</span>',
-                        action:function(e, dt, node, config){
-                            builder.Widget('leads').create(function(response){
-
-                                // Add the record to the table
-                                dt.row.add(response.record).draw();
-                            });
-                        },
-                    },
-                    {
-                        className : 'btn-teal',
-                        init: function (dt, node){
-                            $(node).removeClass('btn-secondary');
-                        },
-                        text: '<i class="bi bi-database-up"></i><span class="ms-2 d-xl-inline d-none">'+builder.Locale.get('Import')+'</span>',
-                        action:function(e, dt, node, config){
-                            builder.Widget('leads').import(function(response){
-
-                                // Add the record to the table
-                                dt.row.add(response.record).draw();
-                            });
-                        },
-                    },
-                    {
-                        extend : 'selected',
-                        className : 'btn-warning requires-selection d-none',
-                        init: function (dt, node){
-                            $(node).removeClass('btn-secondary');
-                        },
-                        text: '<i class="bi bi-person-plus"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Assign')+'</span>',
-                        action:function(e, dt, node, config){
-                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).assign(function(records){
-
-                                // Deselect all rows
-                                dt.rows().deselect();
-                            });
-                        },
-                    },
-                    {
-                        extend : 'selected',
-                        className : 'btn-dark requires-selection d-none',
-                        init: function (dt, node){
-                            $(node).removeClass('btn-secondary');
-                        },
-                        text: '<i class="bi bi-archive"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Archive')+'</span>',
-                        action:function(e, dt, node, config){
-                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).archive(function(records){
-
-                                // Remove the records from the table
-                                dt.rows({ selected: true }).remove().draw();
-
-                                // Deselect all rows
-                                dt.rows().deselect();
-                            });
-                        },
-                    },
-                    {
-                        extend : 'selected',
-                        className : 'btn-info requires-selection-multiple d-none',
-                        init: function (dt, node){
-                            $(node).removeClass('btn-secondary');
-                        },
-                        text: '<i class="bi bi-link-45deg"></i><span class="ms-2 d-xl-inline d-none">'+builder.Locale.get('Link')+'</span>',
-                        action:function(e, dt, node, config){
-                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).link(function(records){
-
-                                // Deselect all rows
-                                dt.rows().deselect();
-                            });
-                        },
-                    },
-                ],
+                buttons: [],
                 columns: [
                     {
                         targets: 0,

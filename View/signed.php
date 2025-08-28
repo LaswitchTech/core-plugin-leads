@@ -6,11 +6,13 @@
                 url: '/api/leads/fetchAll',
                 conditions: [
                     {key: 'isArchived', operator: '<>', value: 1},
+                    {key: 'client', operator: 'IS NOT NULL', value: null},
                     {key: 'client.isArchived', operator: '<>', value: 1},
                     {key: 'client.task.isArchived', operator: '<>', value: 1},
                     {key: 'task.isArchived', operator: '<>', value: 1},
                     {key: 'task.progress', operator: '>', value: 2},
                     {key: 'task.assignedTo', operator: '=', value: USER_ID},
+                    {key: 'task.isCompleted', operator: '<>', value: 1},
                     {key: 'client', operator: 'IS NOT NULL', value: null},
                 ],
                 dblclick: function(event, table, dt, node, data){

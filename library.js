@@ -1055,6 +1055,387 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
 
         // Set Self
         const self = this;
+
+        // Create the Modal
+        this._builder.Component(
+            "modal",
+            {
+                icon: "database-up",
+                title: this._builder.Locale.get("Import Wizard"),
+                color: 'teal',
+                size: "xl",
+                callback: {
+                    submit: function(element,modal){
+
+                        // Set Constants
+                        const stepper = element.stepper;
+                        const options = element.options;
+                        const step = element.steps[element.current];
+                        const form = step.form;
+
+                        // Check the current step
+                        console.log(element.current, step, form);
+                        switch(element.current){
+                            case 'upload':
+                                form.val().file.then(data => {
+                                    // Check if a file was selected
+                                    if(data.length > 0){
+
+                                        // Select the file
+                                        const file = data[Object.keys(data)[0]];
+
+                                        // Generate a md5 checksum
+                                        self._builder.Helper.md5(file.content.split(',')[1],function(checksum){
+
+                                            // Save the checksum
+                                            file.checksum = checksum;
+
+                                            // Set additional properties
+                                            file.targetTable = "leads";
+                                            file.isPublic = 1;
+
+                                            // Check if the file is empty or if the file type is not supported
+                                            if(file.json.length === 0){
+                                                form.input('file').invalid(self._builder.Locale.get('The selected file is empty. Please select a valid file to proceed.'));
+                                            } else {
+
+                                                // Loop through the columns
+                                                for(const [key, value] of Object.entries(file.json[Object.keys(file.json)[0]])){
+                                                    options.push({id:key,text:key + ' - ' + value});
+                                                }
+
+                                                // Save the file in the step
+                                                step.file = file;
+
+                                                // Navigate to the next step
+                                                stepper.next();
+                                            }
+                                        });
+                                    } else {
+                                        form.input('file').invalid(self._builder.Locale.get('Please select a file to proceed.'));
+                                    }
+                                }).catch(error => {
+                                    console.error('Error reading files:', error);
+                                    form.input('file').invalid(error)
+                                });
+                                return;
+                            case 'prospects':
+                                if(form.val().name && form.val().name !== 'none'){
+                                    stepper.next();
+                                } else {
+                                    form.input('name').invalid(self._builder.Locale.get('Please select a field for Name to proceed.'));
+                                }
+                                return;
+                            case 'contacts':
+                                const promises = [];
+                                const prospects = [];
+                                for(const [key, record] of Object.entries(element.steps.upload.file.json)){
+                                    const prospect = {};
+                                    for(const [column, map] of Object.entries(element.steps.prospects.form.val())){
+                                        prospect[column] = record[map] || null;
+                                        if(prospect[column] === null || prospect[column] === ''){
+                                            delete prospect[column];
+                                        }
+                                    }
+                                    prospect.contacts = [];
+                                    for(const [id, inputs] of Object.entries(form)){
+                                        const contact = {};
+                                        for(const [column, map] of Object.entries(inputs.val())){
+                                            contact[column] = record[map] || null;
+                                            if(contact[column] === null || contact[column] === ''){
+                                                delete contact[column];
+                                            }
+                                        }
+                                        if(typeof contact.role !== 'undefined' && contact.role){
+                                            contact.role = contact.role.split(',').map(value => value.trim());
+                                        }
+                                        if(typeof contact.name !== 'undefined' && contact.name){
+                                            prospect.contacts.push(contact);
+                                        }
+                                    }
+                                    if(typeof prospect.tags !== 'undefined' && prospect.tags){
+                                        prospect.tags = prospect.tags.split(',').map(value => value.trim());
+                                    }
+                                    if(typeof prospect.industries !== 'undefined' && prospect.industries){
+                                        prospect.industries = prospect.industries.split(',').map(value => value.trim());
+                                    }
+                                    if(typeof prospect.name !== 'undefined' && prospect.name){
+                                        prospects.push(prospect);
+                                    }
+                                }
+                                for(const [key, prospect] of Object.entries(prospects)){
+                                    promises.push(function(bar){
+                                        return new Promise((res, rej) => {
+                                            console.log(prospect);
+                                            $.ajax({
+                                                url: '/api/leads/create',
+                                                headers: {'X-CSRF-Authorization': CSRF_KEY},
+                                                type: 'POST',dataType: 'json',
+                                                data: prospect,
+                                                error: function(xhr, status, error) {
+                                                    console.error('Error while importing this prospect:', error);
+                                                    bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
+                                                    rej(error);
+                                                },
+                                                success: function(response) {
+                                                    bar.removeClass('text-bg-success text-bg-danger').addClass('text-bg-primary');
+                                                    if(prospect.contacts.length){
+                                                        for(const [key, contact] of Object.entries(prospect.contacts)){
+                                                            contact.targetTable = 'leads';
+                                                            contact.targetId = response.record.id;
+                                                            console.log(contact);
+                                                            $.ajax({
+                                                                url: '/api/contacts/create',
+                                                                headers: {'X-CSRF-Authorization': CSRF_KEY},
+                                                                type: 'POST',dataType: 'json',
+                                                                data: contact,
+                                                                error: function(xhr, status, error) {
+                                                                    console.error('Error while importing this contact:', error);
+                                                                    bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
+                                                                    rej(error);
+                                                                },
+                                                                success: function(response) {
+                                                                    bar.removeClass('text-bg-success text-bg-danger').addClass('text-bg-primary');
+                                                                    res();
+                                                                },
+                                                            });
+                                                        }
+                                                    } else {
+                                                        res();
+                                                    }
+                                                    if(typeof callback === 'function'){
+                                                        callback(response);
+                                                    }
+                                                },
+                                            });
+                                        });
+                                    });
+                                }
+                                modal.spinner(true);
+                                self._loader('teal', promises, function(){
+
+                                    // Close the modal
+                                    modal.hide();
+                                });
+                                return;
+                        }
+                    },
+                },
+            },
+            function(modal,component){
+
+                // Set the parent
+                const parent = component;
+
+                // Styling
+                parent.body.addClass('p-0');
+                parent.body.controls = $(document.createElement('div')).addClass('p-3 py-2').appendTo(parent.body);
+                parent.current = 'upload';
+                parent.options = [];
+
+                // Create the Stepper
+                self._builder.Component(
+                    'stepper',
+                    component.body,
+                    {
+                        class: {
+                            control: 'rounded-pill',
+                            content: 'p-3 py-2',
+                        },
+                    },
+                    function(stepper, component){
+
+                        // Set the stepper in the element for later use
+                        parent.stepper = stepper;
+                        parent.steps = {};
+
+                        // Styling
+                        component.controls.appendTo(parent.body.controls);
+                        component.pagination.addClass('d-none');
+
+                        stepper.add(
+                            {
+                                label: self._builder.Locale.get('Upload'),
+                                icon: 'upload',
+                                class: {
+                                    content: 'bg-gray-200 border-top',
+                                },
+                            },
+                            function(step){
+                                step.control.attr('data-bs-toggle', null);
+                                step.content.on('show.bs.collapse', function () {
+                                    parent.current = 'upload';
+                                });
+                                step.form = self._builder.Utility(
+                                    'form',
+                                    step.content,
+                                    {},
+                                    function(form,component){
+
+                                        // Upload
+                                        form.add(
+                                            'excel',
+                                            {
+                                                name: 'file',
+                                                placeholder: self._builder.Locale.get('Select file'),
+                                            }
+                                        );
+                                    },
+                                );
+                                parent.steps.upload = step;
+                            }
+                        );
+                        stepper.add(
+                            {
+                                label: self._builder.Locale.get('Prospects'),
+                                icon: 'building',
+                                class: {
+                                    content: 'bg-gray-200 border-top',
+                                },
+                            },
+                            function(step){
+                                step.control.attr('data-bs-toggle', null);
+                                step.content.on('show.bs.collapse', function () {
+                                    parent.current = 'prospects';
+                                    for(const [name, input] of Object.entries(step.form._inputs)){
+                                        input.delete();
+                                        for(const [key, option] of Object.entries(parent.options)){
+                                            input.add(option.id, option.text);
+                                        }
+                                        input.val(name);
+                                    }
+                                });
+                                step.form = self._builder.Utility(
+                                    'form',
+                                    step.content,
+                                    {
+                                        class: {
+                                            component: 'row g-3',
+                                        },
+                                    },
+                                    function(form,component){
+
+                                        // Create a form to map the columns
+                                        for(const [key, column] of Object.entries(['name', 'dba', 'address', 'city', 'country', 'state', 'zipcode', 'email', 'fax', 'phone', 'mobile', 'tollfree', 'businessNumber', 'importerExtension', 'taxExtension', 'locale', 'website', 'industries', 'tags'])){
+
+                                            // Create the select2
+                                            form.add(
+                                                'select2',
+                                                {
+                                                    name: column,
+                                                    label: self._builder.Locale.get(self._builder.Helper.ucwords(column)),
+                                                    placeholder: self._builder.Locale.get('Select a field'),
+                                                    options: parent.options,
+                                                    value: column,
+                                                    required: (column === 'name'),
+                                                    class: {
+                                                        component: (column === 'name') ? 'col-12' : 'col-12 col-md-6',
+                                                        label: (column === 'name') ? 'text-bg-primary' : '',
+                                                    },
+                                                }
+                                            );
+                                        }
+                                    },
+                                );
+                                parent.steps.prospects = step;
+                            }
+                        );
+                        stepper.add(
+                            {
+                                label: self._builder.Locale.get('Contacts'),
+                                icon: 'person-vcard',
+                                class: {
+                                    content: '',
+                                },
+                            },
+                            function(step){
+                                step.control.attr('data-bs-toggle', null);
+                                step.content.on('show.bs.collapse', function () {
+                                    parent.current = 'contacts';
+                                    for(const [id, form] of Object.entries(step.form)){
+                                        for(const [name, input] of Object.entries(form._inputs)){
+                                            input.delete();
+                                            for(const [key, option] of Object.entries(parent.options)){
+                                                input.add(option.id, option.text);
+                                            }
+                                            if(['name','title','role','email','phone','mobile'].includes(name)){
+                                                input.val('c'+(parseInt(id) + 1)+'.'+name);
+                                            } else {
+                                                if(typeof parent.steps.prospects.form.val()[name] !== 'undefined'){
+                                                    input.val(parent.steps.prospects.form.val()[name]);
+                                                } else {
+                                                    input.val(name);
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                                step.content.removeClass('p-3 py-2');
+                                step.content.bar = $(document.createElement('div')).addClass('bg-gray-200 border-top p-3 py-2').appendTo(step.content);
+                                step.content.bar.btn = $(document.createElement('button')).attr({
+                                    'type': 'button',
+                                    'class': 'btn btn-success',
+                                }).html('<i class="bi bi-plus-lg"></i>').appendTo(step.content.bar).click(function(){
+                                    step.add();
+                                });
+                                step.content.forms = $(document.createElement('div')).appendTo(step.content);
+                                step.form = [];
+                                step.add = function(){
+                                    step.form.push(
+                                        self._builder.Utility(
+                                            'form',
+                                            $(document.createElement('div')).addClass('border-top p-3 py-2').appendTo(step.content.forms),
+                                            {
+                                                class: {
+                                                    component: 'row g-3',
+                                                },
+                                            },
+                                            function(form,component){
+
+                                                // Create a form to map the columns
+                                                for(const [key, column] of Object.entries(['name', 'title', 'role', 'address', 'city', 'country', 'state', 'zipcode', 'email', 'fax', 'phone', 'mobile', 'tollfree', 'locale', 'website'])){
+
+                                                    // Create the select2
+                                                    form.add(
+                                                        'select2',
+                                                        {
+                                                            name: column,
+                                                            label: self._builder.Locale.get(self._builder.Helper.ucwords(column)),
+                                                            placeholder: self._builder.Locale.get('Select a field'),
+                                                            options: parent.options,
+                                                            required: (column === 'name'),
+                                                            class: {
+                                                                component: (column === 'name') ? 'col-12' : 'col-12 col-md-6',
+                                                                label: (column === 'name') ? 'text-bg-primary' : '',
+                                                            },
+                                                        },
+                                                        function(input){
+                                                            if(['name','title','role','email','phone','mobile'].includes(column)){
+                                                                input.val('c'+parseInt(step.form.length)+'.'+column);
+                                                            } else {
+                                                                if(typeof parent.steps.prospects.form.val()[column] !== 'undefined'){
+                                                                    input.val(parent.steps.prospects.form.val()[column]);
+                                                                } else {
+                                                                    input.val(column);
+                                                                }
+                                                            }
+                                                        }
+                                                    );
+                                                }
+                                            },
+                                        )
+                                    );
+                                };
+                                parent.steps.contacts = step;
+                            }
+                        );
+                    }
+                );
+
+                // Show the modal
+                modal.show();
+            },
+        );
     }
 
     assign(callback = null){
@@ -1117,7 +1498,7 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
 
                                                         // Create a promise for each record
                                                         for(const [key, record] of Object.entries(self._properties.data)){
-                                                            promises.push(function(){
+                                                            promises.push(function(bar){
                                                                 return new Promise((res, rej) => {
 
                                                                     // AJAX Request
@@ -1128,11 +1509,13 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                                                         data: form.val(),
                                                                         error: function(xhr, status, error) {
                                                                             console.error('Error assigning user:', error);
+                                                                            bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
                                                                             rej(error);
                                                                         },
                                                                         success: function(response) {
 
                                                                             // Resolve the promise
+                                                                            bar.removeClass('text-bg-danger text-bg-success').addClass('text-bg-primary');
                                                                             res();
                                                                         },
                                                                     });
@@ -1245,7 +1628,7 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                 if(current.id != record.id){
 
                                     // Create the promise
-                                    promises.push(function(){
+                                    promises.push(function(bar){
                                         return new Promise((res, rej) => {
 
                                             // AJAX Request
@@ -1261,11 +1644,13 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                                 },
                                                 error: function(xhr, status, error) {
                                                     console.error('Error linking this record:', error);
+                                                    bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
                                                     rej(error);
                                                 },
                                                 success: function(response) {
 
                                                     // Resolve the promise
+                                                    bar.removeClass('text-bg-danger text-bg-success').addClass('text-bg-primary');
                                                     res();
                                                 },
                                             });
@@ -1327,7 +1712,7 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
 
                         // Create a promise for each record
                         for(const [key, record] of Object.entries(self._properties.data)){
-                            promises.push(function(){
+                            promises.push(function(bar){
                                 return new Promise((res, rej) => {
 
                                     // AJAX Request
@@ -1336,11 +1721,13 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                         type: 'GET',dataType: 'json',
                                         error: function(xhr, status, error) {
                                             console.error('Error archiving this task:', error);
+                                            bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
                                             rej(error);
                                         },
                                         success: function(response) {
 
                                             // Resolve the promise
+                                            bar.removeClass('text-bg-success text-bg-danger').addClass('text-bg-primary');
                                             res();
                                         },
                                     });
@@ -1425,14 +1812,14 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                         for(const [key, promise] of Object.entries(promises)){
 
                             // Execute the promises sequentially
-                            await promise();
+                            await promise(component.bar);
 
                             // Set the value
                             progress.set((parseInt(key) + 1));
                         }
 
                         // Update the color of the progress bar
-                        component.bar.removeClass('text-bg-primary').addClass('text-bg-success');
+                        component.bar.removeClass('text-bg-primary text-bg-danger').addClass('text-bg-success');
 
                         // Check if a callback is provided
                         if (typeof callback === 'function') {
