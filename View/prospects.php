@@ -83,20 +83,20 @@
                     },
                     {
                         extend : 'selected',
-                        className : 'btn-dark requires-selection d-none',
+                        className : 'btn-purple requires-selection d-none',
                         init: function (dt, node){
                             $(node).removeClass('btn-secondary');
                         },
-                        text: '<i class="bi bi-archive"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Archive')+'</span>',
+                        text: '<i class="bi bi-chevron-bar-right"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Promote')+'</span>',
                         action:function(e, dt, node, config){
-                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).archive(function(records){
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).promote(function(records){
 
                                 // Remove the records from the table
                                 dt.rows({ selected: true }).remove().draw();
 
                                 // Deselect all rows
                                 dt.rows().deselect();
-                            });
+                            }, 3);
                         },
                     },
                     {
@@ -108,6 +108,24 @@
                         text: '<i class="bi bi-link-45deg"></i><span class="ms-2 d-xl-inline d-none">'+builder.Locale.get('Link')+'</span>',
                         action:function(e, dt, node, config){
                             builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).link(function(records){
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
+                        },
+                    },
+                    {
+                        extend : 'selected',
+                        className : 'btn-dark requires-selection d-none',
+                        init: function (dt, node){
+                            $(node).removeClass('btn-secondary');
+                        },
+                        text: '<i class="bi bi-archive"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Archive')+'</span>',
+                        action:function(e, dt, node, config){
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).archive(function(records){
+
+                                // Remove the records from the table
+                                dt.rows({ selected: true }).remove().draw();
 
                                 // Deselect all rows
                                 dt.rows().deselect();
