@@ -1074,7 +1074,6 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                         const form = step.form;
 
                         // Check the current step
-                        console.log(element.current, step, form);
                         switch(element.current){
                             case 'upload':
                                 form.val().file.then(data => {
@@ -1166,7 +1165,6 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                 for(const [key, prospect] of Object.entries(prospects)){
                                     promises.push(function(bar){
                                         return new Promise((res, rej) => {
-                                            console.log(prospect);
                                             $.ajax({
                                                 url: '/api/leads/create',
                                                 headers: {'X-CSRF-Authorization': CSRF_KEY},
@@ -1183,7 +1181,6 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                                         for(const [key, contact] of Object.entries(prospect.contacts)){
                                                             contact.targetTable = 'leads';
                                                             contact.targetId = response.record.id;
-                                                            console.log(contact);
                                                             $.ajax({
                                                                 url: '/api/contacts/create',
                                                                 headers: {'X-CSRF-Authorization': CSRF_KEY},
@@ -1787,7 +1784,6 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
 
                         // Create a promise for each record
                         for(const [key, record] of Object.entries(self._properties.data)){
-                            console.log(key, record);
                             promises.push(function(bar){
                                 return new Promise((res, rej) => {
 
