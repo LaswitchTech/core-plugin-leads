@@ -273,7 +273,7 @@ class LeadsEndpoint extends BaseEndpoint {
             }
 
             // Check if tags is set
-            if($this->Helper->Core->isInstalled('tags') && array_key_exists('tags', $parameters) && !empty($parameters['tags'])){
+            if($this->Helper->Core->isInstalled('tags') && array_key_exists('tags', $parameters) && is_array($parameters['tags']) && !empty($parameters['tags'])){
 
                 // Loop through the tags
                 foreach($parameters['tags'] ?? [] as $key => $tag){
@@ -288,7 +288,7 @@ class LeadsEndpoint extends BaseEndpoint {
             }
 
             // Check if industries is set
-            if($this->Helper->Core->isInstalled('industries') && array_key_exists('industries', $parameters) && !empty($parameters['industries'])){
+            if($this->Helper->Core->isInstalled('industries') && array_key_exists('industries', $parameters) && !is_array($parameters['industries']) && !empty($parameters['industries'])){
 
                 // Loop through the industries
                 foreach($parameters['industries'] ?? [] as $key => $industry){
@@ -330,6 +330,9 @@ class LeadsEndpoint extends BaseEndpoint {
         // Check if the record is accessible
         if($message['status'] == 200){
 
+            // Retrieve the parameters
+            $parameters = $message['data']['parameters'];
+
             // Check if the Event Plugin is accessible
             if($this->Helper->Core->isInstalled('event')){
 
@@ -349,6 +352,36 @@ class LeadsEndpoint extends BaseEndpoint {
 
                 // Create the event
                 $message['data']['event'][] = $this->Model->Event->create($event);
+            }
+
+            // Check if tags is set
+            if($this->Helper->Core->isInstalled('tags') && array_key_exists('tags', $parameters) && is_array($parameters['tags']) && !empty($parameters['tags'])){
+
+                // Loop through the tags
+                foreach($parameters['tags'] ?? [] as $key => $tag){
+
+                    // Check if the tag is not empty
+                    if(!empty($tag)){
+
+                        // Create the tag
+                        $this->Model->Tags->create(['name' => $tag]);
+                    }
+                }
+            }
+
+            // Check if industries is set
+            if($this->Helper->Core->isInstalled('industries') && array_key_exists('industries', $parameters) && !is_array($parameters['industries']) && !empty($parameters['industries'])){
+
+                // Loop through the industries
+                foreach($parameters['industries'] ?? [] as $key => $industry){
+
+                    // Check if the industry is not empty
+                    if(!empty($industry)){
+
+                        // Create the industry
+                        $this->Model->Industries->create(['name' => $industry]);
+                    }
+                }
             }
         }
 
