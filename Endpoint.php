@@ -237,7 +237,7 @@ class LeadsEndpoint extends BaseEndpoint {
                 $record['progress'] = 0;
                 $record['scale'] = count($record['process']);
                 $record['color'] = 'primary';
-                $record['link'] = '/plugin/leads/details?id='.$fields['vcard'].'&name='.urlencode($parameters['name']);
+                $record['link'] = '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']);
                 $record['isActive'] = 0;
                 $record['targetTable'] = 'leads';
                 $record['targetId'] = $message['data']['record']['id'];
