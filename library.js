@@ -1359,6 +1359,90 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
         );
     }
 
+    link(callback = null){
+
+        // Set Self
+        const self = this;
+
+        // Check if data is available
+        if(!this._properties.data || (Array.isArray(this._properties.data) && this._properties.data.length === 0) || (typeof this._properties.data === "object" && Object.keys(this._properties.data).length === 0)){
+            console.error('No lead data available to assign.');
+            return;
+        }
+
+        // Create the Modal
+        this._builder.Component(
+            "modal",
+            {
+                icon: "link-45deg",
+                title: this._builder.Locale.get("Are you sure?"),
+                body: this._builder.Locale.get("You are about to link the selected records together. Are you sure you want to continue?"),
+                color: 'info',
+                callback: {
+                    submit: function(element,modal){
+
+                        // Show the modal spinner
+                        modal.spinner(true);
+
+                        // Create an array to hold promises
+                        const promises = [];
+
+
+
+                        // Create a promise for each record
+                        for(const [key, current] of Object.entries(self._properties.data)){
+
+                            // Loop through the records
+                            for(const [k, record] of Object.entries(self._properties.data)){
+
+                                // Skip current record
+                                if(current.id != record.id){
+
+                                    // Create the promise
+                                    promises.push(function(bar){
+                                        return new Promise((res, rej) => {
+
+                                            // AJAX Request
+                                            API.endpoint('/relationship/create').data({
+                                                "sourceTable": self._properties.table ?? 'leads',
+                                                "sourceId": current.id,
+                                                "targetTable": self._properties.table ?? 'leads',
+                                                "targetId": record.id,
+                                            }).execute(function(response){
+                                                bar.removeClass('text-bg-danger text-bg-success').addClass('text-bg-primary');
+                                                res();
+                                            },function(xhr, status, error){
+                                                bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
+                                                rej(error);
+                                            });
+                                        });
+                                    });
+                                }
+                            }
+                        }
+
+                        // Execute the promises with loader
+                        self._loader('info', promises, function(){
+
+                            // Check if a callback is provided
+                            if (typeof callback === 'function') {
+                                callback(self._properties.data);
+                            }
+
+                            // Close the modal
+                            modal.hide();
+                        });
+                    },
+                },
+            },
+            function(modal,component){
+
+                // Show the modal
+                modal.show();
+            },
+        );
+    }
+
     assign(callback = null){
 
         // Set Self
@@ -1486,90 +1570,6 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
 
                 // Styling
                 component.body.addClass('p-0');
-
-                // Show the modal
-                modal.show();
-            },
-        );
-    }
-
-    link(callback = null){
-
-        // Set Self
-        const self = this;
-
-        // Check if data is available
-        if(!this._properties.data || (Array.isArray(this._properties.data) && this._properties.data.length === 0) || (typeof this._properties.data === "object" && Object.keys(this._properties.data).length === 0)){
-            console.error('No lead data available to assign.');
-            return;
-        }
-
-        // Create the Modal
-        this._builder.Component(
-            "modal",
-            {
-                icon: "link-45deg",
-                title: this._builder.Locale.get("Are you sure?"),
-                body: this._builder.Locale.get("You are about to link the selected records together. Are you sure you want to continue?"),
-                color: 'info',
-                callback: {
-                    submit: function(element,modal){
-
-                        // Show the modal spinner
-                        modal.spinner(true);
-
-                        // Create an array to hold promises
-                        const promises = [];
-
-
-
-                        // Create a promise for each record
-                        for(const [key, current] of Object.entries(self._properties.data)){
-
-                            // Loop through the records
-                            for(const [k, record] of Object.entries(self._properties.data)){
-
-                                // Skip current record
-                                if(current.id != record.id){
-
-                                    // Create the promise
-                                    promises.push(function(bar){
-                                        return new Promise((res, rej) => {
-
-                                            // AJAX Request
-                                            API.endpoint('/relationship/create').data({
-                                                "sourceTable": self._properties.table ?? 'leads',
-                                                "sourceId": current.id,
-                                                "targetTable": self._properties.table ?? 'leads',
-                                                "targetId": record.id,
-                                            }).execute(function(response){
-                                                bar.removeClass('text-bg-danger text-bg-success').addClass('text-bg-primary');
-                                                res();
-                                            },function(xhr, status, error){
-                                                bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
-                                                rej(error);
-                                            });
-                                        });
-                                    });
-                                }
-                            }
-                        }
-
-                        // Execute the promises with loader
-                        self._loader('info', promises, function(){
-
-                            // Check if a callback is provided
-                            if (typeof callback === 'function') {
-                                callback(self._properties.data);
-                            }
-
-                            // Close the modal
-                            modal.hide();
-                        });
-                    },
-                },
-            },
-            function(modal,component){
 
                 // Show the modal
                 modal.show();
