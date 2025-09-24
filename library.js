@@ -219,11 +219,15 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
                             }).appendTo(self._component.details.body);
                             self._component.details.body.vcard[key].header = $(document.createElement('p')).text(self._builder.Locale.get(key)).appendTo(self._component.details.body.vcard[key]);
                             self._component.details.body.vcard[key].object = $(document.createElement('div')).attr({
+                                "class": "d-flex justify-content-start align-items-start flex-wrap",
                                 "data-type": key,
                                 "data-vcard-id": self._data.record.vcard.id,
                             }).appendTo(self._component.details.body.vcard[key]);
                             for(const [k, unique] of Object.entries(value ?? [])){
-                                $(document.createElement('span')).addClass('badge text-bg-'+color).html('<i class="me-1 bi bi-'+icon+'"></i>'+unique).appendTo(self._component.details.body.vcard[key].object);
+                                $(document.createElement('span')).attr({
+                                    'class': 'badge text-start text-wrap m-1 text-bg-'+color,
+                                    'style': 'font-size: 0.8rem; max-width: 250px;',
+                                }).html('<i class="me-1 bi bi-'+icon+'"></i>'+unique).appendTo(self._component.details.body.vcard[key].object);
                             }
                             break;
                     }
@@ -530,13 +534,19 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
             // Tags
             self._component.details.body.vcard.tags.object.empty();
             for(const [k, unique] of Object.entries(self._data.record.vcard.tags ?? [])){
-                $(document.createElement('span')).addClass('badge text-bg-warning').html('<i class="me-1 bi bi-tag"></i>'+unique).appendTo(self._component.details.body.vcard.tags.object);
+                $(document.createElement('span')).attr({
+                    'class': 'badge text-bg-warning text-start text-wrap m-1',
+                    'style': 'font-size: 0.8rem; max-width: 250px;',
+                }).html('<i class="me-1 bi bi-tag"></i>'+unique).appendTo(self._component.details.body.vcard.tags.object);
             }
 
             // Industries
             self._component.details.body.vcard.industries.object.empty();
             for(const [k, unique] of Object.entries(self._data.record.vcard.industries ?? [])){
-                $(document.createElement('span')).addClass('badge text-bg-primary').html('<i class="me-1 bi bi-crosshair"></i>'+unique).appendTo(self._component.details.body.vcard.industries.object);
+                $(document.createElement('span')).attr({
+                    'class': 'badge text-bg-primary text-start text-wrap m-1',
+                    'style': 'font-size: 0.8rem; max-width: 250px;',
+                }).html('<i class="me-1 bi bi-crosshair"></i>'+unique).appendTo(self._component.details.body.vcard.industries.object);
             }
         }
 
