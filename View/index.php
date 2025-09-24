@@ -55,6 +55,24 @@
                     },
                     {
                         extend : 'selected',
+                        className : 'btn-primary requires-selection d-none',
+                        init: function (dt, node){
+                            $(node).removeClass('btn-secondary');
+                        },
+                        text: '<i class="bi bi-exclamation-triangle"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Priority')+'</span>',
+                        action:function(e, dt, node, config){
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).priority(function(records){
+
+                                // Refresh the records in the table
+                                dt.rows({ selected: true }).data(records).draw();
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            });
+                        },
+                    },
+                    {
+                        extend : 'selected',
                         className : 'btn-dark requires-selection d-none',
                         init: function (dt, node){
                             $(node).removeClass('btn-secondary');

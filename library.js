@@ -625,6 +625,9 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
             table: 'leads',
             callback: {},
         };
+        this._color = ['secondary','primary','warning','orange','danger'];
+        this._name = ['Low','Normal','High','Urgent','Critical'];
+        this._icon = ['exclamation-triangle','info-circle','exclamation-circle','exclamation-diamond','exclamation-square'];
     }
 
     _create(){
@@ -1501,6 +1504,7 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                                                 // AJAX Request
                                                                 API.endpoint('/tasks/update?id='+record.task.id).data(form.val()).execute(function(response){
                                                                     bar.removeClass('text-bg-danger text-bg-success').addClass('text-bg-primary');
+                                                                    self._properties.data[key].task = response.record;
                                                                     res();
                                                                 },function(xhr, status, error){
                                                                     bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
@@ -1555,6 +1559,135 @@ builder.add('widgets','leads', class extends builder.ComponentClass {
                                     modal.hide();
                                     reject(error);
                                 });
+                            } catch(e) {
+
+                                // Log the error and reject the promise
+                                console.error('Error in assign modal:', e);
+                                modal.hide();
+                                reject(e);
+                            }
+                        });
+                    },
+                },
+            },
+            function(modal,component){
+
+                // Styling
+                component.body.addClass('p-0');
+
+                // Show the modal
+                modal.show();
+            },
+        );
+    }
+
+    priority(callback = null){
+
+        // Set Self
+        const self = this;
+
+        // Check if data is available
+        if(!this._properties.data || (Array.isArray(this._properties.data) && this._properties.data.length === 0) || (typeof this._properties.data === "object" && Object.keys(this._properties.data).length === 0)){
+            console.error('No lead data available to assign.');
+            return;
+        }
+
+        // Create the Modal
+        this._builder.Component(
+            "modal",
+            {
+                icon: "exclamation-triangle",
+                title: this._builder.Locale.get("Change priority"),
+                color: 'primary',
+                callback: {
+                    load: function(component, modal){
+
+                        // Set the component
+                        const parent = component;
+
+                        // Promise to fetch data
+                        return new Promise((resolve, reject) => {
+                            try {
+
+                                // Create the Form
+                                self._builder.Utility(
+                                    'form',
+                                    component.body,
+                                    {
+                                        callback: {
+                                            submit: function(form){
+
+                                                // Show the modal spinner
+                                                modal.spinner(true);
+
+                                                // Create an array to hold promises
+                                                const promises = [];
+
+                                                // Create a promise for each record
+                                                for(const [key, record] of Object.entries(self._properties.data)){
+                                                    promises.push(function(bar){
+                                                        return new Promise((res, rej) => {
+
+                                                            // AJAX Request
+                                                            API.endpoint('/tasks/update?id='+record.task.id).data(form.val()).execute(function(response){
+                                                                bar.removeClass('text-bg-danger text-bg-success').addClass('text-bg-primary');
+                                                                self._properties.data[key].task = response.record;
+                                                                res();
+                                                            },function(xhr, status, error){
+                                                                bar.removeClass('text-bg-primary text-bg-success').addClass('text-bg-danger');
+                                                                rej(error);
+                                                            });
+                                                        });
+                                                    });
+                                                }
+
+                                                // Execute the promises with loader
+                                                self._loader('primary', promises, function(){
+
+                                                    // Check if a callback is provided
+                                                    if (typeof callback === 'function') {
+                                                        callback(self._properties.data);
+                                                    }
+
+                                                    // Close the modal
+                                                    modal.hide();
+                                                });
+                                            },
+                                        }
+                                    },
+                                    function(form,component){
+
+                                        // Add event listener on the modal submit button
+                                        parent.dialog.content.footer.submit.click(function(e){
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            form.submit();
+                                        });
+
+                                        // assignedTo
+                                        form.add(
+                                            'select2',
+                                            {
+                                                name: 'priority',
+                                                label: self._builder.Locale.get('Level'),
+                                                placeholder: self._builder.Locale.get('Select a level'),
+                                                class: {
+                                                    component: 'bg-gray-200 p-3 py-2 rounded-0',
+                                                },
+                                                options: [
+                                                    {id: 0, text: self._builder.Locale.get(self._name[0])},
+                                                    {id: 1, text: self._builder.Locale.get(self._name[1])},
+                                                    {id: 2, text: self._builder.Locale.get(self._name[2])},
+                                                    {id: 3, text: self._builder.Locale.get(self._name[3])},
+                                                    {id: 4, text: self._builder.Locale.get(self._name[4])},
+                                                ],
+                                            }
+                                        );
+
+                                        // Resolve the promise
+                                        resolve();
+                                    },
+                                );
                             } catch(e) {
 
                                 // Log the error and reject the promise
