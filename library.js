@@ -21,7 +21,7 @@ builder.add('layouts','lead', class extends builder.ComponentClass {
             {name: 'High', color: 'warning', icon: 'exclamation-circle'},
             {name: 'Urgent', color: 'orange', icon: 'exclamation-diamond'},
             {name: 'Critical', color: 'danger', icon: 'exclamation-square'},
-        ]
+        ];
     }
 
     _create(){

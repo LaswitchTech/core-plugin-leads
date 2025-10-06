@@ -8,14 +8,14 @@
                     {key: 'task.isArchived', operator: '=', value: 1},
                 ],
                 dblclick: function(event, table, dt, node, data){
-                    window.location.href = "/plugin/leads/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
+                    window.location.href = "/crm/leads/archived/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
                 },
                 actions: {
                     details:{
                         label:'Details',
                         icon:'eye',
                         action:function(event, table, dt, node, row, data){
-                            window.location.href = "/plugin/leads/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
+                            window.location.href = "/crm/leads/archived/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
                         }
                     },
                     // recover:{
