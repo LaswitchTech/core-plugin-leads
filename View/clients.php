@@ -14,7 +14,7 @@
                     {key: 'task.progress', operator: '>', value: 2},
                 ],
                 dblclick: function(event, table, dt, node, data){
-                    window.location.href = "/plugin/leads/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
+                    window.location.href = "/crm/clients/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
                 },
                 selectTools: false,
                 actions: {
@@ -22,7 +22,7 @@
                         label:'Details',
                         icon:'eye',
                         action:function(event, table, dt, node, row, data){
-                            window.location.href = "/plugin/leads/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
+                            window.location.href = "/crm/clients/details?id=" + data.id + "&name=" + encodeURIComponent(data.vcard.name);
                         }
                     },
                     archive:{

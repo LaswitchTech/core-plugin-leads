@@ -181,7 +181,7 @@ class LeadsEndpoint extends BaseEndpoint {
                     'message' => 'New Lead Created for <vcard>'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                     'icon' => 'circle',
                     'color' => 'secondary',
-                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                    'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
                     'targetTable' => 'leads',
                     'targetId' => $message['data']['record']['id'],
                 ];
@@ -211,7 +211,7 @@ class LeadsEndpoint extends BaseEndpoint {
                         'message' => 'New vCard Created for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                         'icon' => 'circle',
                         'color' => 'secondary',
-                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                        'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
                         'targetTable' => 'leads',
                         'targetId' => $message['data']['record']['id'],
                     ];
@@ -237,7 +237,7 @@ class LeadsEndpoint extends BaseEndpoint {
                 $record['progress'] = 0;
                 $record['scale'] = count($record['process']);
                 $record['color'] = 'primary';
-                $record['link'] = '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']);
+                $record['link'] = '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']);
                 $record['isActive'] = 0;
                 $record['targetTable'] = 'leads';
                 $record['targetId'] = $message['data']['record']['id'];
@@ -254,7 +254,7 @@ class LeadsEndpoint extends BaseEndpoint {
                         'message' => 'New Task Created for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                         'icon' => 'circle',
                         'color' => 'secondary',
-                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                        'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
                         'targetTable' => 'leads',
                         'targetId' => $message['data']['record']['id'],
                     ];
@@ -263,7 +263,7 @@ class LeadsEndpoint extends BaseEndpoint {
                     $message['data']['event'][] = $this->Model->Event->create($event);
 
                     // Setup a new event for the task
-                    $event['link'] = '/plugin/tasks/index?id='.$fields['task'];
+                    $event['link'] = '/tasks/index?id='.$fields['task'];
                     $event['targetTable'] = 'tasks';
                     $event['targetId'] = $fields['task'];
 
@@ -345,7 +345,7 @@ class LeadsEndpoint extends BaseEndpoint {
                     'message' => 'Lead Updated for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                     'icon' => 'circle',
                     'color' => 'secondary',
-                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                    'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
                     'targetTable' => 'leads',
                     'targetId' => $message['data']['record']['id'],
                 ];
@@ -412,7 +412,7 @@ class LeadsEndpoint extends BaseEndpoint {
                     'message' => 'Lead Deleted for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                     'icon' => 'circle',
                     'color' => 'secondary',
-                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                    'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
                     'targetTable' => 'leads',
                     'targetId' => $message['data']['record']['id'],
                 ];
@@ -436,7 +436,7 @@ class LeadsEndpoint extends BaseEndpoint {
                         'message' => 'Client Deleted for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                         'icon' => 'circle',
                         'color' => 'secondary',
-                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                        'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
                         'targetTable' => 'leads',
                         'targetId' => $message['data']['record']['id'],
                     ];
@@ -445,7 +445,7 @@ class LeadsEndpoint extends BaseEndpoint {
                     $message['data']['event'][] = $this->Model->Event->create($event);
 
                     // Setup a new event for the client
-                    $event['link'] = '/plugin/clients/index?id='.$message['data']['record']['client']['id'];
+                    $event['link'] = '/crm/clients/index?id='.$message['data']['record']['client']['id'];
                     $event['targetTable'] = 'clients';
                     $event['targetId'] = $message['data']['record']['client']['id'];
 
@@ -468,7 +468,7 @@ class LeadsEndpoint extends BaseEndpoint {
                             'message' => 'Task Deleted for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                             'icon' => 'circle',
                             'color' => 'secondary',
-                            'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                            'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
                             'targetTable' => 'leads',
                             'targetId' => $message['data']['record']['id'],
                         ];
@@ -477,7 +477,7 @@ class LeadsEndpoint extends BaseEndpoint {
                         $message['data']['event'][] = $this->Model->Event->create($event);
 
                         // Setup a new event for the task
-                        $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['client']['task'];
+                        $event['link'] = '/tasks/index?id='.$message['data']['record']['client']['task'];
                         $event['targetTable'] = 'tasks';
                         $event['targetId'] = $message['data']['record']['client']['task'];
 
@@ -502,7 +502,7 @@ class LeadsEndpoint extends BaseEndpoint {
                         'message' => 'vCard Deleted for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                         'icon' => 'circle',
                         'color' => 'secondary',
-                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                        'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
                         'targetTable' => 'leads',
                         'targetId' => $message['data']['record']['id'],
                     ];
@@ -527,7 +527,7 @@ class LeadsEndpoint extends BaseEndpoint {
                         'message' => 'Task Deleted for <vcard>'.$fields['vcard'].':'.$parameters['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                         'icon' => 'circle',
                         'color' => 'secondary',
-                        'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
+                        'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($parameters['name']),
                         'targetTable' => 'leads',
                         'targetId' => $message['data']['record']['id'],
                     ];
@@ -536,7 +536,7 @@ class LeadsEndpoint extends BaseEndpoint {
                     $message['data']['event'][] = $this->Model->Event->create($event);
 
                     // Setup a new event for the task
-                    $event['link'] = '/plugin/tasks/index?id='.$message['data']['record']['task']['id'];
+                    $event['link'] = '/tasks/index?id='.$message['data']['record']['task']['id'];
                     $event['targetTable'] = 'tasks';
                     $event['targetId'] = $message['data']['record']['task']['id'];
 
@@ -581,7 +581,7 @@ class LeadsEndpoint extends BaseEndpoint {
                     'message' => 'Lead Archived for <vcard>'.$record['vcard']['id'].':'.$record['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                     'icon' => 'circle',
                     'color' => 'secondary',
-                    'link' => '/plugin/leads/details?id='.$record['id'].'&name='.urlencode($record['vcard']['name']),
+                    'link' => '/crm/details?id='.$record['id'].'&name='.urlencode($record['vcard']['name']),
                     'targetTable' => 'leads',
                     'targetId' => $record['id'],
                 ];
@@ -618,7 +618,7 @@ class LeadsEndpoint extends BaseEndpoint {
                     'message' => 'Lead Recovered for <vcard>'.$message['data']['record']['vcard']['id'].':'.$message['data']['record']['vcard']['name'].'</vcard> by <vcard>'.$this->Auth->user()->vcard['id'].':'.$this->Auth->user()->username.'</vcard>',
                     'icon' => 'circle',
                     'color' => 'secondary',
-                    'link' => '/plugin/leads/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
+                    'link' => '/crm/details?id='.$message['data']['record']['id'].'&name='.urlencode($message['data']['record']['vcard']['name']),
                     'targetTable' => 'leads',
                     'targetId' => $message['data']['record']['id'],
                 ];
