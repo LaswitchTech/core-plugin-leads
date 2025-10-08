@@ -64,14 +64,6 @@
         "Extra": ""
     },
     "8": {
-        "Field": "firm",
-        "Type": "bigint(20)",
-        "Null": "YES",
-        "Key": "",
-        "Default": null,
-        "Extra": ""
-    },
-    "9": {
         "Field": "client",
         "Type": "bigint(20)",
         "Null": "YES",
@@ -79,7 +71,7 @@
         "Default": null,
         "Extra": ""
     },
-    "10": {
+    "9": {
         "Field": "organization",
         "Type": "bigint(20)",
         "Null": "YES",
@@ -87,7 +79,7 @@
         "Default": null,
         "Extra": ""
     },
-    "11": {
+    "10": {
         "Field": "isArchived",
         "Type": "int(1)",
         "Null": "NO",
