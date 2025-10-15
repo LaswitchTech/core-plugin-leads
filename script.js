@@ -229,3 +229,44 @@ if(typeof dashboard !== "undefined"){
         }
     });
 }
+
+// Mark as Allocated
+function process_function_AllocateLead(task, value, callback = null){
+
+    // Check if the target is loaded
+    if(task.target === 'undefined'){
+        return;
+    }
+
+    // Initialize clientID
+    var leadID = null;
+
+    // Handle different target tables
+    switch(task.targetTable){
+        case 'leads':
+            leadID = task.targetId;
+            break;
+        case 'importers':
+        case 'clients':
+            leadID = task.target.lead.id;
+            break;
+        default:
+            return;
+    }
+
+    // AJAX Request
+    API.endpoint('/leads/allocate').data({id: leadID}).suppress().execute(function(response, endpoint){
+        // Execute Callback
+        if(typeof callback === "function"){
+            callback(task, response);
+        }
+    });
+}
+function process_meta_AllocateLead(key = null){
+    const metadata = {
+        label: "Mark Lead as Allocated",
+        description: "Mark a Lead as Allocated when a Client Profile is assigned",
+        type: "none",
+    };
+    return metadata[key] ? metadata[key] : metadata;
+}

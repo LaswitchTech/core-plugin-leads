@@ -32,14 +32,6 @@
         "Extra": ""
     },
     "4": {
-        "Field": "assignedTo",
-        "Type": "bigint(20)",
-        "Null": "YES",
-        "Key": "",
-        "Default": null,
-        "Extra": ""
-    },
-    "5": {
         "Field": "vcard",
         "Type": "bigint(20)",
         "Null": "YES",
@@ -47,7 +39,7 @@
         "Default": null,
         "Extra": ""
     },
-    "6": {
+    "5": {
         "Field": "task",
         "Type": "bigint(20)",
         "Null": "YES",
@@ -55,7 +47,7 @@
         "Default": null,
         "Extra": ""
     },
-    "7": {
+    "6": {
         "Field": "delegation",
         "Type": "bigint(20)",
         "Null": "YES",
@@ -63,7 +55,7 @@
         "Default": null,
         "Extra": ""
     },
-    "8": {
+    "7": {
         "Field": "client",
         "Type": "bigint(20)",
         "Null": "YES",
@@ -71,7 +63,7 @@
         "Default": null,
         "Extra": ""
     },
-    "9": {
+    "8": {
         "Field": "organization",
         "Type": "bigint(20)",
         "Null": "YES",
@@ -79,7 +71,7 @@
         "Default": null,
         "Extra": ""
     },
-    "10": {
+    "9": {
         "Field": "isArchived",
         "Type": "int(1)",
         "Null": "NO",
