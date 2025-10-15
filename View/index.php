@@ -73,6 +73,21 @@
                     },
                     {
                         extend : 'selected',
+                        className : 'btn-purple requires-selection d-none',
+                        init: function (dt, node){
+                            $(node).removeClass('btn-secondary');
+                        },
+                        text: '<i class="bi bi-chevron-bar-right"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Forward')+'</span>',
+                        action:function(e, dt, node, config){
+                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).promote(function(records){
+
+                                // Deselect all rows
+                                dt.rows().deselect();
+                            }, 6);
+                        },
+                    },
+                    {
+                        extend : 'selected',
                         className : 'btn-dark requires-selection d-none',
                         init: function (dt, node){
                             $(node).removeClass('btn-secondary');
