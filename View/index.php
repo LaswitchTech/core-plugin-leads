@@ -79,7 +79,15 @@
                         },
                         text: '<i class="bi bi-chevron-bar-right"></i><span class="ms-2 d-xxl-inline d-none">'+builder.Locale.get('Forward')+'</span>',
                         action:function(e, dt, node, config){
-                            builder.Widget('leads',{data: dt.rows({ selected: true }).data().toArray()}).promote(function(records){
+                            const rows = dt.rows({ selected: true }).data().toArray();
+                            builder.Widget('leads',{data: rows}).promote(function(records){
+
+                                // Loop through the rows and update the task info
+                                for(const row of rows){
+
+                                    // AJAX Request
+                                    API.endpoint('/tasks/update?id='+row.task.id).data({isActive: 1}).execute(;
+                                }
 
                                 // Deselect all rows
                                 dt.rows().deselect();
