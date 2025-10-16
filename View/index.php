@@ -86,7 +86,7 @@
                                 for(const row of rows){
 
                                     // AJAX Request
-                                    API.endpoint('/tasks/update?id='+row.task.id).data({isActive: 1}).execute(;
+                                    API.endpoint('/tasks/update?id='+row.task.id).data({isActive: 1}).execute();
                                 }
 
                                 // Deselect all rows
