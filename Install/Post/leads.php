@@ -20,6 +20,7 @@ class LeadsPostModel extends LeadsModel {
 
             // Handle specific fields
             switch($key){
+                case 'firm':
                 case 'assignedTo':
                     unset($record[$key]);
                     break;
