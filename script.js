@@ -47,7 +47,7 @@ if(typeof dashboard !== "undefined"){
                     break;
             }
             if(this._options.owner && this._options.owner !== 'all'){
-                conditions.push({key: 'assignedTo', operator: '=', value: this._options.owner});
+                conditions.push({key: 'task.assignedTo', operator: '=', value: USER_ID});
             }
             return conditions;
         }
